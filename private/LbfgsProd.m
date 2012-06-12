@@ -1,15 +1,7 @@
 function Hx = LbfgsProd(sPrev, yPrev, et) 
 % LbfgsProd : Product with L-BFGS Hessian approximation
 % 
-<<<<<<< HEAD
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
-=======
-<<<<<<< HEAD
-%   $Revision: 0.1.2 $  $Date: 2012/05/30 $
-=======
-%   $Revision: 0.1.0 $  $Date: 2012/05/30 $
->>>>>>> Add SetPNoptOptions
->>>>>>> tmpbranch
 % 
   l = size(sPrev,2);
   L = zeros(l);

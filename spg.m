@@ -6,21 +6,9 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
 %   smooth function value and gradient. nonsmoothF is a handle to a function that
 %   returns the nonsmooth function value and prox.
 % 
-<<<<<<< HEAD:spg.m
 % [x, f, output] = spg(smoothF, nonsmoothF, x, options) replaces the default 
 %   optimization options replaced with values in options, a structure created 
 %   using the SetPNoptOptions function.
-=======
-<<<<<<< HEAD:spg.m
-% [x, f, output] = spg(smoothF, nonsmoothF, x, options) replaces the default opt
-%   optimization options replaced with values in options, a struct created using
-%   the SetSpgOptions function.
-=======
-% [x, f, output] = spg(smoothF, nonsmoothF, x, options) replaces the default 
-%   optimization options replaced with values in options, a structure created 
-%   using the SetPNoptOptions function.
->>>>>>> Add SetPNoptOptions:spg.m
->>>>>>> tmpbranch:spg.m
 % 
   REVISION = '$Revision: 0.1.2$';
   DATE     = '$Date: June 12, 2012$';
@@ -32,15 +20,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   n = length(x);
 
   % Set default options
-<<<<<<< HEAD:spg.m
   DefaultOptions = SetPNoptOptions(...
-=======
-<<<<<<< HEAD:spg.m
-  DefaultOptions = SetSpgOptions(...
-=======
-  DefaultOptions = SetPNoptOptions(...
->>>>>>> Add SetPNoptOptions:spg.m
->>>>>>> tmpbranch:spg.m
     'CheckOpt'        , 1        ,... % Check optimality (requires prox evaluation)
     'Display'         , 1        ,... % Display level 
     'LineSearchMemory', 10       ,... % Number of previous function values to save

@@ -1,27 +1,11 @@
-function options = SetPNoptions(varargin)
+function options = SetPNoptOptions(varargin)
 % SetProxNewtonOptions : Set options for PNopt
 %
-<<<<<<< HEAD:SetPNoptOptions.m
 % options = SetPNoptOptions('param1',val1,'param2',val2,...) creates an options
 %   structure in which the named parameters have the specified values. Default
 %   values are used for parameters that are not specified.
 %   
 % SetPNoptOptions with no input arguments and no output arguments displays all 
-=======
-<<<<<<< HEAD:SetPNoptions.m
-% options = SetPNoptions('param1',val1,'param2',val2,...) creates an options
-%   structure in which the named parameters have the specified values. Default
-%   values are used for parameters that are not specified.
-%   
-% SetPNoptions with no input arguments and no output arguments displays all 
-=======
-% options = SetPNoptOptions('param1',val1,'param2',val2,...) creates an options
-%   structure in which the named parameters have the specified values. Default
-%   values are used for parameters that are not specified.
-%   
-% SetPNoptOptions with no input arguments and no output arguments displays all 
->>>>>>> Add SetPNoptOptions:SetPNoptOptions.m
->>>>>>> tmpbranch:SetPNoptions.m
 %   parameter names and their possible values.
 %
 %   SetPNoptOptions.m
@@ -33,16 +17,8 @@ function options = SetPNoptions(varargin)
     fprintf('          CheckOpt : [          logical |         1 ] \n');
     fprintf('           Display : [ positive integer |         1 ] \n');
     fprintf('  LbfgsCorrections : [ positive integer |        50 ] \n');
-<<<<<<< HEAD:SetPNoptOptions.m
     fprintf('  LineSearchMemory : [ positive integer |        10 ] \n');
     fprintf('  LineSearchMethod : [ string           |     Curvy ] \n');
-=======
-<<<<<<< HEAD:SetPNoptions.m
-=======
-    fprintf('  LineSearchMemory : [ positive integer |        10 ] \n');
-    fprintf('  LineSearchMethod : [ string           |     Curvy ] \n');
->>>>>>> Add SetPNoptOptions:SetPNoptOptions.m
->>>>>>> tmpbranch:SetPNoptions.m
     fprintf('       MaxFunEvals : [ positive integer |      5000 ] \n');
     fprintf('           MaxIter : [ positive integer |       500 ] \n');
     fprintf('            Method : [ string           |     Lbfgs ] \n');

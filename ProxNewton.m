@@ -8,15 +8,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
 % 
 % [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options) replaces the   
 %   default optimization options replaced with values in options, a structure
-<<<<<<< HEAD:ProxNewton.m
 %   created using the SetPNoptOptions function.
-=======
-<<<<<<< HEAD:ProxNewton.m
-%   created using the SetProxNewtonOptions function.
-=======
-%   created using the SetPNoptOptions function.
->>>>>>> Add SetPNoptOptions:ProxNewton.m
->>>>>>> tmpbranch:ProxNewton.m
 % 
   REVISION = '$Revision: 0.1.2$';
   DATE     = '$Date: June 12, 2012$';
@@ -28,15 +20,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   n = length(x);
 
   % Set default options for subproblem
-<<<<<<< HEAD:ProxNewton.m
   SpgOptions = SetPNoptOptions(...
-=======
-<<<<<<< HEAD:ProxNewton.m
-  SpgOptions = SetSpgOptions(...
-=======
-  SpgOptions = SetPNoptOptions(...
->>>>>>> Add SetPNoptOptions:ProxNewton.m
->>>>>>> tmpbranch:ProxNewton.m
     'CheckOpt'   , 1   ,... 
     'Display'    , 0   ,...
     'MaxFunEvals', 1000,...
@@ -53,14 +37,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     );
   
   % Set default options
-<<<<<<< HEAD:ProxNewton.m
-  DefaultOptions = SetPNoptions(...
-=======
   DefaultOptions = SetPNoptOptions(...
-<<<<<<< HEAD:ProxNewton.m
-=======
->>>>>>> Add SetPNoptOptions:ProxNewton.m
->>>>>>> tmpbranch:ProxNewton.m
     'SpgOptions'       , SpgOptions,... % Options for solving subproblems using spg
     'CheckOpt'         , 1         ,... % Check optimality (requires prox evaluation)
     'Display'          , 1         ,... % Display level 

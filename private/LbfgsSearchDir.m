@@ -1,15 +1,7 @@
 function Dx = LbfgsSearchDir(sPrev, yPrev, et, Df) %#codegen
 % LbfgsSearchDir : L-BFGS search direction
 % 
-<<<<<<< HEAD
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
-=======
-<<<<<<< HEAD
-%   $Revision: 0.1.2 $  $Date: 2012/05/30 $
-=======
-%   $Revision: 0.1.0 $  $Date: 2012/05/30 $
->>>>>>> Add SetPNoptOptions
->>>>>>> tmpbranch
 % 
   qty1 = 1./sum(yPrev.*sPrev);
   l = length(qty1);

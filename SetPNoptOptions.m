@@ -16,7 +16,7 @@ function options = SetPNoptOptions(varargin)
     fprintf('  Default parameters for PNopt.m:\n');
     fprintf('          CheckOpt : [          logical |         1 ] \n');
     fprintf('           Display : [ positive integer |         1 ] \n');
-    fprintf('  LbfgsCorrections : [ positive integer |        50 ] \n');
+    fprintf('  LbfgsCorrections : [ positive integer |        10 ] \n');
     fprintf('  LineSearchMemory : [ positive integer |        10 ] \n');
     fprintf('  LineSearchMethod : [ string           |     Curvy ] \n');
     fprintf('       MaxFunEvals : [ positive integer |      5000 ] \n');

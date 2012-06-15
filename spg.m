@@ -1,12 +1,12 @@
-function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
-% spg : Spectral proximal gradient methods
+function [x, f, output] = Spg(smoothF, nonsmoothF, x, varargin)
+% Spg : Spectral proximal gradient methods
 % 
-% [x, f, output] = spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
+% [x, f, output] = Spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
 %   of the objective function. smoothF is a handle to a function that returns the
 %   smooth function value and gradient. nonsmoothF is a handle to a function that
 %   returns the nonsmooth function value and prox.
 % 
-% [x, f, output] = spg(smoothF, nonsmoothF, x, options) replaces the default 
+% [x, f, output] = Spg(smoothF, nonsmoothF, x, options) replaces the default 
 %   optimization options replaced with values in options, a structure created 
 %   using the SetPNoptOptions function.
 % 
@@ -93,7 +93,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   if Display    
     if CheckOpt
       fprintf(' %s\n',repmat('=',1,57));
-      fprintf('             SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf('               Spg  v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,57));
       fprintf(' %4s  %8s  %12s  %12s  %12s \n',...
         '','F evals', 'Step len.', 'Obj. val.', 'Optimality');
@@ -102,9 +102,9 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
         iter, FunEvals, '', f, opt);
     else
       fprintf(' %s\n',repmat('=',1,43));
-      fprintf('       SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf('        Spg  v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,43));
-      fprintf(' %4s  %8s  %12s  %12s  %12s \n',...
+      fprintf(' %4s  %8s  %12s  %12s  \n',...
         '','F evals', 'Step len.', 'Obj. val.');
       fprintf(' %s\n',repmat('-',1,43));
       fprintf(' %4d  %8d  %12s  %12.4e \n',...

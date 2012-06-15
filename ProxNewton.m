@@ -41,7 +41,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     'SpgOptions'       , SpgOptions,... % Options for solving subproblems using spg
     'CheckOpt'         , 1         ,... % Check optimality (requires prox evaluation)
     'Display'          , 1         ,... % Display level 
-    'LbfgsCorrections' , 50        ,... % Number of L-BFGS corrections
+    'LbfgsCorrections' , 10        ,... % Number of L-BFGS corrections
     'MaxFunEvals'      , 5000      ,... % Max number of function evaluations
     'MaxIter'          , 500       ,... % Max number of iterations
     'Method'           , 'Lbfgs'   ,... % Method for choosing search directions
@@ -71,7 +71,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   
   % Replace default option values with values in user-supplied options struct
   if nargin > 3
-    options = SetProxNewtonOptions(DefaultOptions, varargin{1});
+    options = SetPNoptOptions(DefaultOptions, varargin{1});
   else
     options = DefaultOptions;
   end
@@ -92,7 +92,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   UseMex            = options.UseMex;
   
   switch SubproblemMethod
-    case 'Bb'
+    case 'Spg'
       SpgOptions    = options.BbOptions;
       SubproblemTol = SpgOptions.TolOpt;
     case 'Tfocs'
@@ -149,7 +149,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
       fprintf(' %s\n',repmat('=',1,43));
       fprintf('     ProxNewton v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,43));
-      fprintf(' %4s  %8s  %12s  %12s  %12s \n',...
+      fprintf(' %4s  %8s  %12s  %12s \n',...
         '','F evals', 'Step len.', 'Obj. val.');
       fprintf(' %s\n',repmat('-',1,43));
       fprintf(' %4d  %8d  %12s  %12.4e \n',...
@@ -233,7 +233,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
             'TolOpt', SubproblemTol ...
             );
           [z, ~, SubproblemOutput] = ...
-            spg(@(z) QuadF(Hf, Df, x ,z), nonsmoothF, x, SpgOptions);
+            Spg(@(z) QuadF(Hf, Df, x ,z), nonsmoothF, x, SpgOptions);
           
           % If BB stops early, then make stopping tolerance smaller.     
           if SubproblemOutput.Iterations < SpgOptions.MaxIter  
@@ -258,14 +258,20 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     DfPrev = Df;
     
     % Conduct line search for a step length that safisfies the Armijo condition
-    if iter > 1 || ~SmallFirstStep 
+    if iter > 1 
       [x, f, h, Df, step, LineSearchFlag ,LineSearchFunEvals] = ...
         LineSearch(x, z-x, 1, f, h, Df'*(z-x), smoothF, nonsmoothF,...
         TolX, MaxFunEvals-FunEvals); %#ok<ASGLU>
     else
-      [x, f, Df, step, LineSearchFlag ,LineSearchFunEvals] = ...
-        CurvySearch(x, -Df, min(1,1/norm(Df,1)), f, -norm(Df)^2, smoothF, nonsmoothF,...
-        TolX, MaxFunEvals-FunEvals); %#ok<ASGLU>
+      if SmallFirstStep 
+        [x, f, Df, step, LineSearchFlag ,LineSearchFunEvals] = ...
+          CurvySearch(x, -Df, max(min(1,1/norm(Df,1)),TolX), f, -norm(Df)^2, smoothF, nonsmoothF,...
+          TolX, MaxFunEvals-FunEvals); %#ok<ASGLU>
+      else
+        [x, f, Df, step, LineSearchFlag ,LineSearchFunEvals] = ...
+          CurvySearch(x, -Df, 1, f, -norm(Df)^2, smoothF, nonsmoothF,...
+          TolX, MaxFunEvals-FunEvals); %#ok<ASGLU>          
+      end
       
       SubproblemOutput = struct(...
         'Iterations', LineSearchFunEvals ...

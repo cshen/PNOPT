@@ -1,12 +1,12 @@
-function [xt, ft, Dft, t, flag ,FunEvals] = CurvySearch ...
-  (x, d, t, f, gtd, smoothF, nonsmoothF, TolX, MaxFunEvals)
+function [xt, ft, Dft, t, flag ,iter] = CurvySearch ...
+  (x, d, t, f, gtd, smoothF, nonsmoothF, TolX, maxIter)
 % CurvySearch : Curve search for step that satisfies the Armijo condition
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
 
 % --------------------Initialize--------------------
   % Set line search parameters
-  al = 0.01;
+  al = 0.0001;
   be = 0.5;
 
   % Set termination flags
@@ -14,7 +14,7 @@ function [xt, ft, Dft, t, flag ,FunEvals] = CurvySearch ...
   FLAG_TOLX        = 2;
   FLAG_MAXFUNEVALS = 3;
 
-  FunEvals = 0;
+  iter = 0;
   
   % --------------------Main Loop--------------------
   while 1
@@ -23,7 +23,7 @@ function [xt, ft, Dft, t, flag ,FunEvals] = CurvySearch ...
     [ft, Dft] = smoothF(xt);
      ft       = ft + ht;
      
-    FunEvals = FunEvals + 1;
+    iter = iter + 1;
     
     % Check termination criteria
     De = 0.5*norm(xt-x)^2;
@@ -33,7 +33,7 @@ function [xt, ft, Dft, t, flag ,FunEvals] = CurvySearch ...
     elseif t <= TolX                % Step length too small
       flag = FLAG_TOLX;
       break
-    elseif FunEvals >= MaxFunEvals  % Too many linesearch iterations.
+    elseif iter >= maxIter  % Too many linesearch iterations.
       flag = FLAG_MAXFUNEVALS;
       break
     end

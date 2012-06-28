@@ -1,5 +1,5 @@
-function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
-  (x, d, t, f, nonsmoothf, gtd, smoothF, nonsmoothF, TolX, MaxFunEvals)
+function [xt, ft, ht, Dft, t, Flag ,iter] = LineSearch ...
+  (x, d, t, f, nonsmoothf, gtd, smoothF, nonsmoothF, TolX, maxIter)
 % LineSearch : Line search for step that satisfies a sufficient descent
 %   condition.
 % 
@@ -7,7 +7,7 @@ function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
 
 % --------------------Initialize--------------------
   % Set line search parameters
-  al = 1e-4;
+  al = 0.0001;
   be = 0.5;
 
   % Set termination flags
@@ -15,7 +15,7 @@ function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
   FLAG_TOLX        = 2;
   FLAG_MAXFUNEVALS = 3;
 
-  FunEvals = 0;
+  iter = 0;
   
   Nonsmoothf1 = nonsmoothF(x+d);
 
@@ -27,7 +27,7 @@ function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
      ht       = nonsmoothF(xt);
      ft       = ft + ht;
      
-    FunEvals = FunEvals + 1;
+    iter = iter + 1;
     
     % Check termination criteria
     De = gtd + Nonsmoothf1 - nonsmoothf;
@@ -37,7 +37,7 @@ function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
     elseif t <= TolX                % Step length too small
       Flag = FLAG_TOLX;
       break
-    elseif FunEvals >= MaxFunEvals  % Too many linesearch iterations.
+    elseif iter >= maxIter  % Too many linesearch iterations.
       Flag = FLAG_MAXFUNEVALS;
       break
     end
@@ -48,7 +48,7 @@ function [xt, ft, ht, Dft, t, Flag ,FunEvals] = LineSearch ...
     % Safeguard quadratic interpolation
     else
       tq = (-gtd*t^2) / (2*(ft-f-t*gtd));
-      if 0.01 <= tq || tq <= 0.99*t 
+      if 0.01 <= tq && tq <= 0.99*t 
         t = tq;
       else
         t = be*t;

@@ -1,7 +1,7 @@
 function Hx = LbfgsProd(sPrev, yPrev, et) 
 % LbfgsProd : Product with L-BFGS Hessian approximation
 % 
-%   $Revision: 0.1.1 $  $Date: 2012/06/15 $
+%   $Revision: 0.1.2 $  $Date: 2012/06/15 $
 % 
   l = size(sPrev,2);
   L = zeros(l);

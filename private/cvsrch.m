@@ -131,8 +131,8 @@
 %     Jorge J. More', David J. Thuente
 %
 %     **********
-      ftol = 0.01;
-      gtol = 0.9;
+      ftol = 0.0001;
+      gtol = 0.99;
       stpmin = xtol;
       stpmax = 10;
       
@@ -212,7 +212,7 @@
          if (nfev >= maxfev) 
                   info = 5;
          end
-         if (brackt && (stmax-stmin)/(1+stmax) <= xtol) 
+         if (brackt && stmax-stmin <= xtol) 
                   info = 4;
          end
          if (f <= ftest1 && abs(dg) <= gtol*(-dginit)) 

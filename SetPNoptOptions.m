@@ -9,54 +9,50 @@ function options = SetPNoptOptions(varargin)
 %   parameter names and their possible values.
 %
 %   SetPNoptOptions.m
-%   $Revision: 0.1.2 $  $Date: 2012/06/12 $
+%   $Revision: 0.2.0 $  $Date: 2012/06/24 $
 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('  Default parameters for PNopt.m:\n');
-    fprintf('          CheckOpt : [          logical |         1 ] \n');
-    fprintf('           Display : [ positive integer |         1 ] \n');
-    fprintf('  LbfgsCorrections : [ positive integer |        10 ] \n');
-    fprintf('  LineSearchMemory : [ positive integer |        10 ] \n');
-    fprintf('  LineSearchMethod : [ string           |     Curvy ] \n');
-    fprintf('       MaxFunEvals : [ positive integer |      5000 ] \n');
-    fprintf('           MaxIter : [ positive integer |       500 ] \n');
-    fprintf('            Method : [ string           |     Lbfgs ] \n');
-    fprintf('        PrintEvery : [ positive integer |        10 ] \n');
-    fprintf('    SmallFirstStep : [ logical          |         1 ] \n');
-    fprintf('  SubproblemMethod : [ string           |     Tfocs ] \n');
-    fprintf('         TfocsOpts : [ struct           | TfocsOpts ] \n');
-    fprintf('            TolFun : [ positive scalar  |      1e-9 ] \n');
-    fprintf('            TolOpt : [ positive scalar  |      1e-6 ] \n');
-    fprintf('              TolX : [ positive scalar  |      1e-9 ] \n');
-    fprintf('           UseHess : [ logical          |         0 ] \n');
-    fprintf('            UseMex : [ logical          |         1 ]\n');
+    fprintf('          checkOpt : [          logical |          1 ] \n');
+    fprintf('           display : [ positive integer |          1 ] \n');
+    fprintf('  LbfgsCorrections : [ positive integer |         10 ] \n');
+    fprintf('          LSmemory : [ positive integer |         10 ] \n');
+    fprintf('          LSmethod : [ string           |      Curvy ] \n');
+    fprintf('       maxfunEvals : [ positive integer |       5000 ] \n');
+    fprintf('           maxIter : [ positive integer |        500 ] \n');
+    fprintf('            method : [ string           |      Lbfgs ] \n');
+    fprintf('        printEvery : [ positive integer |         10 ] \n');
+    fprintf('  aubproblemMethod : [ string           |      Tfocs ] \n');
+    fprintf('        spgOptions : [ struct           | spgOptions ] \n');
+    fprintf('         TfocsOpts : [ struct           |  TfocsOpts ] \n');
+    fprintf('            TolFun : [ positive scalar  |       1e-9 ] \n');
+    fprintf('            TolOpt : [ positive scalar  |       1e-6 ] \n');
+    fprintf('              TolX : [ positive scalar  |       1e-9 ] \n');
     fprintf('\n');
     return;
   end
 
   Names = [
-    'SpgOptions       '
-    'CheckOpt         '
-    'Display          '
+    'checkOpt         '
+    'display          '
     'Hess             '
     'LbfgsCorrections '
-    'LineSearchMemory '
-    'LineSearchMethod '
-    'MaxFunEvals      '
-    'MaxIter          '
-    'Method           '
-    'PrintEvery       '
-    'SmallFirstStep   '
-    'SubproblemMethod '
+    'LSmemory         '
+    'LSmethod         '
+    'maxfunEvals      '
+    'maxIter          '
+    'method           '
+    'printEvery       '
+    'spgOptions       '
+    'subproblemMethod '
     'TfocsOpts        '
     'TolFun           '
     'TolOpt           '
     'TolX             '
-    'UseHess          '
-    'UseMex           '
+    'useMex           '
     ];
-  [m,n] = size(Names);
+  [m,n] = size(Names); %#ok<NASGU>
   names = lower(Names);
 
   % Combine all leading options structures o1, o2, ... in l1Set(o1,o2,...).
@@ -71,7 +67,7 @@ function options = SetPNoptOptions(varargin)
     if ~isempty(arg)                      % [] is a valid options argument
       if ~isa(arg,'struct')
         error(sprintf(['Expected argument %d to be a string parameter name ' ...
-          'or an options structure\ncreated with SetPNoptOptions.'], i));
+          'or an options structure\ncreated with SetPNoptOptions.'], i)); %#ok<SPERR>
       end
       for j = 1:m
         if any(strcmp(fieldnames(arg),deblank(Names(j,:))))

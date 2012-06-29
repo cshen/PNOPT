@@ -1,6 +1,6 @@
 function [M, Dh] = smoothDual(d, Be, x, nonsmoothF, v)
-% smoothedDual : Smoothed dual to the proximal Newton subproblem
-%
+% smoothedDual 
+% 
 %   $Revision: 0.1.0 $  $Date: 2012/06/24 $
 % 
   [~, w] = nonsmoothF(x-v/d,1/d);

@@ -72,19 +72,19 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
   if display    
     if checkOpt
-      fprintf(' %s\n',repmat('=',1,69));
-      fprintf('                     SPG  v.%s (%s)\n', REVISION, DATE);
-      fprintf(' %s\n',repmat('=',1,69));
-      fprintf(' %4s  %8s  %10s  %12s  %12s  %12s \n',...
-        '','F evals', 'Prox evals', 'Step len.', 'Obj. val.', 'optimality');
-      fprintf(' %s\n',repmat('-',1,69));
+      fprintf(' %s\n',repmat('=',1,64));
+      fprintf('            SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf(' %s\n',repmat('=',1,64));
+      fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
+        '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'optimality');
+      fprintf(' %s\n',repmat('-',1,64));
     else
-      fprintf(' %s\n',repmat('=',1,55));
-      fprintf('              Spg  v.%s (%s)\n', REVISION, DATE);
-      fprintf(' %s\n',repmat('=',1,55));
-      fprintf(' %4s  %8s  %10s  %12s  %12s \n',...
-        '','F evals', 'Prox evals', 'Step len.', 'Obj. val.');
-      fprintf(' %s\n',repmat('-',1,55));
+      fprintf(' %s\n',repmat('=',1,50));
+      fprintf('     SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf(' %s\n',repmat('=',1,50));
+      fprintf(' %4s   %6s  %6s  %12s  %12s \n',...
+        '','Fun.', 'Prox', 'Step len.', 'Obj. val.');
+      fprintf(' %s\n',repmat('-',1,50));
     end
   end
   
@@ -113,10 +113,10 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
   if display    
     if checkOpt
-      fprintf(' %4d  %8d  %10d  %12s  %12.4e  %12.4e\n',...
+      fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, '', f, opt);
     else
-      fprintf(' %4d  %8d  %10d  %12s  %12.4e \n',...
+      fprintf(' %4d | %6d  %6d  %12s  %12.4e \n',...
         iter, funEvals, proxEvals, '', f);
     end
   end
@@ -127,7 +127,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     output = struct(...
       'flag'      , FLAG_OPTIMAL,...
       'funEvals'  , funEvals    ,...
-      'Iterations', iter        ,...
+      'iterations', iter        ,...
       'method'    , method      ,...
       'optimality', opt         ,...
       'options'   , options     ,...
@@ -195,10 +195,10 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     
     if display && mod(iter,printEvery) == 0
       if checkOpt
-        fprintf(' %4d  %8d  %10d  %12.4e  %12.4e  %12.4e\n',...
+        fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
           iter, funEvals, proxEvals, step, f, opt);
       else
-        fprintf(' %4d  %8d  %10d  %12.4e  %12.4e\n',...
+        fprintf(' %4d | %6d  %6d  %12.4e  %12.4e\n',...
           iter, funEvals, proxEvals, step, f);
       end
     end
@@ -208,27 +208,27 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     % Check optimality condition
     if checkOpt && opt <= TolOpt
       flag    = FLAG_OPTIMAL;
-      Message = MESSAGE_OPTIMAL;
+      message = MESSAGE_OPTIMAL;
       break
       
     % Check lack of progress
     elseif norm(x-xPrev)/max(1,norm(xPrev)) <= TolX 
       flag    = FLAG_TOLX;
-      Message = MESSAGE_TOLX;
+      message = MESSAGE_TOLX;
       break
     elseif f <= min(fPrev) && abs(min(fPrev)-f)/max(1,abs(fPrev(end))) <= TolFun
       flag    = FLAG_TOLFUN;
-      Message = MESSAGE_TOLFUN;
+      message = MESSAGE_TOLFUN;
       break
       
     % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      Message = MESSAGE_MAXITER;
+      message = MESSAGE_MAXITER;
       break
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      Message = MESSAGE_MAXFUNEVALS;
+      message = MESSAGE_MAXFUNEVALS;
       break
     end
   end
@@ -244,10 +244,10 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
   if display && mod(iter,printEvery) > 0
     if checkOpt
-      fprintf(' %4d  %8d  %10d  %12.4e  %12.4e  %12.4e\n',...
+      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, step, f, opt);
     else
-      fprintf(' %4d  %8d  %10d  %12.4e  %12.4e\n',...
+      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, step, f);
     end
   end
@@ -255,7 +255,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   output = struct(...
     'flag'      , flag     ,...
     'funEvals'  , funEvals ,...
-    'Iterations', iter     ,...
+    'iterations', iter     ,...
     'options'   , options  ,...
     'proxEvals' , proxEvals,...
     'Trace'     , Trace     ...
@@ -266,12 +266,12 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
   if display
     if checkOpt
-      fprintf(' %s\n',repmat('-',1,57));
-      fprintf(' %s\n',Message)
-      fprintf(' %s\n',repmat('-',1,57));
+      fprintf(' %s\n',repmat('-',1,64));
+      fprintf(' %s\n',message)
+      fprintf(' %s\n',repmat('-',1,64));
     else
-      fprintf(' %s\n',repmat('-',1,43));
-      fprintf(' %s\n',Message)
-      fprintf(' %s\n',repmat('-',1,43));
+      fprintf(' %s\n',repmat('-',1,50));
+      fprintf(' %s\n',message)
+      fprintf(' %s\n',repmat('-',1,50));
     end
   end

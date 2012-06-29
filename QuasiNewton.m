@@ -107,7 +107,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     output = struct(...
     'flag'      , FLAG_OPTIMAL,...
     'funEvals'  , funEvals    ,...
-    'Iterations', iter        ,...
+    'iterations', iter        ,...
     'method'    , method      ,...
     'optimality', opt         ,...
     'options'   , options     ,...
@@ -222,27 +222,27 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     % Check optimality condition
     if opt <= TolOpt
       flag    = FLAG_OPTIMAL;
-      Message = MESSAGE_OPTIMAL;
+      message = MESSAGE_OPTIMAL;
       break
       
     % Check lack of progress
     elseif norm(x-xPrev)/max(1,norm(xPrev)) <= TolX 
       flag    = FLAG_TOLX;
-      Message = MESSAGE_TOLX;
+      message = MESSAGE_TOLX;
       break
     elseif f <= fPrev && (fPrev-f)/max(1,abs(fPrev)) <= TolFun
       flag    = FLAG_TOLFUN;
-      Message = MESSAGE_TOLFUN;
+      message = MESSAGE_TOLFUN;
       break
       
     % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      Message = MESSAGE_MAXITER;
+      message = MESSAGE_MAXITER;
       break
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      Message = MESSAGE_MAXFUNEVALS;
+      message = MESSAGE_MAXFUNEVALS;
       break
     end
   end
@@ -261,7 +261,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   output = struct(...
     'flag'      , flag    ,...
     'funEvals'  , funEvals,...
-    'Iterations', iter    ,...
+    'iterations', iter    ,...
     'method'    , method  ,...
     'optimality', opt     ,...
     'options'   , options ,...
@@ -270,6 +270,6 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   
   if display
     fprintf(' %s\n',repmat('-',1,56));
-    fprintf(' %s\n',Message)
+    fprintf(' %s\n',message)
     fprintf(' %s\n',repmat('-',1,56));
   end

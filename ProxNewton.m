@@ -174,7 +174,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     output = struct(...
       'flag'      , FLAG_OPTIMAL,...
       'funEvals'  , funEvals    ,...
-      'Iterations', iter        ,...
+      'iterations', iter        ,...
       'method'    , method      ,...
       'optimality', opt         ,...
       'options'   , options     ,...
@@ -269,11 +269,12 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
           proxEvals = proxEvals + spgOutput.proxEvals;
           
           % If SPG stops early, then make stopping tolerance smaller.     
-          if spgOutput.Iterations < spgOptions.maxIter  
+          if spgOutput.iterations < spgOptions.maxIter  
             SubproblemTol  = max(0.5*SubproblemTol, TolOpt);     
           end
           
         case 'smoothed' % doesn't fucking work
+          
           
         case 'Tfocs'
           TfocsOpts.tol = SubproblemTol;
@@ -348,27 +349,27 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     % Check optimality condition
     if checkOpt && opt <= TolOpt
       flag    = FLAG_OPTIMAL;
-      Message = MESSAGE_OPTIMAL;
+      message = MESSAGE_OPTIMAL;
       break
       
     % Check lack of progress
     elseif norm(x-xPrev)/max(1,norm(xPrev)) <= TolX 
       flag    = FLAG_TOLX;
-      Message = MESSAGE_TOLX;
+      message = MESSAGE_TOLX;
       break
     elseif abs(fPrev-f)/max(1,abs(fPrev)) <= TolFun
       flag    = FLAG_TOLFUN;
-      Message = MESSAGE_TOLFUN;
+      message = MESSAGE_TOLFUN;
       break
       
     % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      Message = MESSAGE_MAXITER;
+      message = MESSAGE_MAXITER;
       break
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      Message = MESSAGE_MAXFUNEVALS;
+      message = MESSAGE_MAXFUNEVALS;
       break
     end
   end
@@ -395,7 +396,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   output = struct(...
     'flag'      , flag     ,...
     'funEvals'  , funEvals ,...
-    'Iterations', iter     ,...
+    'iterations', iter     ,...
     'method'    , method   ,...
     'options'   , options  ,...
     'proxEvals' , proxEvals,...
@@ -408,11 +409,11 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   if display
     if checkOpt
       fprintf(' %s\n',repmat('-',1,64));
-      fprintf(' %s\n',Message)
+      fprintf(' %s\n',message)
       fprintf(' %s\n',repmat('-',1,64));
     else
       fprintf(' %s\n',repmat('-',1,50));
-      fprintf(' %s\n',Message)
+      fprintf(' %s\n',message)
       fprintf(' %s\n',repmat('-',1,50));
     end
   end

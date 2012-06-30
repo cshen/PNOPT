@@ -33,27 +33,19 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     'restart'   , -Inf ,...
     'tol'       , 1e-3  ...
     );
-
-  QNoptions = SetPNoptOptions(...
-    'display'    , 1    ,...
-    'maxfunEvals', 5000 ,...
-    'maxIter'    , 500 ,...
-    'TolFun'     , 0    ...
-    );
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
     'checkOpt'         , 1         ,... % Check optimality (requires prox evaluation)
-    'display'          , 1         ,... % display level 
+    'display'          , 10        ,... % display frequency (<= 0 for no display) 
     'LbfgsCorrections' , 20        ,... % Number of L-BFGS corrections
     'maxfunEvals'      , 5000      ,... % Max number of function evaluations
     'maxIter'          , 500       ,... % Max number of iterations
     'method'           , 'Lbfgs'   ,... % method for choosing search directions
-    'printEvery'       , 10        ,... % display frequency (iterations)
     'spgOptions'       , spgOptions,... % Options for solving subproblems using spg
     'subproblemMethod' , 'Tfocs'   ,... % Solver for solving subproblems
     'TfocsOpts'        , TfocsOpts ,... % Options for solving subproblems using TFOCS
-    'TolFun'           , 1e-9      ,... % Stopping tolerance on objective function 
+    'TolFun'           , 1e-9      ,... % Stopping tolerance on relative change in the objective function 
     'TolOpt'           , 1e-6      ,... % Stopping tolerance on optimality
     'TolX'             , 1e-9       ... % Stopping tolerance on solution
     );
@@ -84,7 +76,6 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   maxfunEvals       = options.maxfunEvals;
   maxIter           = options.maxIter;
   method            = options.method;
-  printEvery        = options.printEvery;
   subproblemMethod  = options.subproblemMethod;
   TolFun            = options.TolFun;
   TolOpt            = options.TolOpt;
@@ -111,7 +102,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     Trace.optimality = zeros(maxIter+1,1);
   end
   
-  if display    
+  if display > 0  
     if checkOpt
       fprintf(' %s\n',repmat('=',1,64));
       fprintf('                ProxNewton v.%s (%s)\n', REVISION, DATE);
@@ -158,7 +149,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     Trace.optimality(1) = opt; 
   end
   
-  if display    
+  if display > 0
     if checkOpt
       fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, '', f, opt);
@@ -182,7 +173,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
       'Trace'     , Trace        ...
       );
   
-    if display
+    if display > 0
       fprintf(' %s\n',repmat('-',1,64));
       fprintf(' %s\n',MESSAGE_OPTIMAL)
       fprintf(' %s\n',repmat('-',1,64));
@@ -213,11 +204,6 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
         else
           R  = eye(length(x));
         end
-        
-        if strcmp(subproblemMethod,'smoothed')
-          Be = @(x) R\(R'\x);
-          Dx = -R\(R'\Df);
-        end
 
       % Limited-memory BFGS method
       case 'Lbfgs'
@@ -241,18 +227,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
           yPrev = zeros(length(x), 0);
           et    = 1;
         end
-        
-        if strcmp(subproblemMethod,'smoothed')
-          Be = @(x) LbfgsSearchDir(sPrev, yPrev, et, -x);
-          Dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
-        end
-        
-      % Newton's method
-      case 'Newton'        
-        if strcmp(subproblemMethod,'smoothed')
-          Be = @(x) Hf\x;
-          Dx = -Hf\Df;
-        end
+
     end
     
     % Solve subproblem to obtain search direction
@@ -334,7 +309,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
       Trace.optimality(iter+1) = opt; 
     end
     
-    if display && mod(iter,printEvery) == 0
+    if display > 0 && mod(iter,display) == 0
       if checkOpt
         fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
           iter, funEvals, proxEvals, step, f, opt);
@@ -383,7 +358,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
     Trace.optimality = Trace.optimality(1:iter+1);
   end
   
-  if display && mod(iter,printEvery) > 0
+  if display > 0 && mod(iter,display) > 0
     if checkOpt
       fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, step, f, opt);
@@ -406,7 +381,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
      output.Optimality = opt;
   end
   
-  if display
+  if display > 0
     if checkOpt
       fprintf(' %s\n',repmat('-',1,64));
       fprintf(' %s\n',message)

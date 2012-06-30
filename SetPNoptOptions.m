@@ -15,14 +15,12 @@ function options = SetPNoptOptions(varargin)
   if nargin == 0 && nargout == 0
     fprintf('  Default parameters for PNopt.m:\n');
     fprintf('          checkOpt : [          logical |          1 ] \n');
-    fprintf('           display : [ positive integer |          1 ] \n');
+    fprintf('           display : [ positive integer |         10 ] \n');
     fprintf('  LbfgsCorrections : [ positive integer |         10 ] \n');
     fprintf('          LSmemory : [ positive integer |         10 ] \n');
-    fprintf('          LSmethod : [ string           |      Curvy ] \n');
     fprintf('       maxfunEvals : [ positive integer |       5000 ] \n');
     fprintf('           maxIter : [ positive integer |        500 ] \n');
     fprintf('            method : [ string           |      Lbfgs ] \n');
-    fprintf('        printEvery : [ positive integer |         10 ] \n');
     fprintf('  aubproblemMethod : [ string           |      Tfocs ] \n');
     fprintf('        spgOptions : [ struct           | spgOptions ] \n');
     fprintf('         TfocsOpts : [ struct           |  TfocsOpts ] \n');
@@ -39,11 +37,9 @@ function options = SetPNoptOptions(varargin)
     'Hess             '
     'LbfgsCorrections '
     'LSmemory         '
-    'LSmethod         '
     'maxfunEvals      '
     'maxIter          '
     'method           '
-    'printEvery       '
     'spgOptions       '
     'subproblemMethod '
     'TfocsOpts        '
@@ -52,6 +48,7 @@ function options = SetPNoptOptions(varargin)
     'TolX             '
     'useMex           '
     ];
+  
   [m,n] = size(Names); %#ok<NASGU>
   names = lower(Names);
 

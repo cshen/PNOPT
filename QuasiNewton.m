@@ -18,12 +18,11 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
-    'display'         , 1      ,... % display level
+    'display'         , 10     ,... % display > 0 level
     'LbfgsCorrections', 50     ,... % Number of L-BFGS corrections
     'maxfunEvals'     , 50000  ,... % Max number of function evaluations
     'maxIter'         , 500    ,... % Max number of iterations
     'method'          , 'Lbfgs',... % method for choosing search directions
-    'printEvery'      , 10     ,... % display output every printEvery iterations
     'TolFun'          , 1e-9   ,... % Stopping tolerance on objective function 
     'TolOpt'          , 1e-6   ,... % Stopping tolerance on optimality
     'TolX'            , 1e-9    ... % Stopping tolerance on solution
@@ -54,7 +53,6 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   maxfunEvals      = options.maxfunEvals;
   maxIter          = options.maxIter;
   method           = options.method;
-  printEvery       = options.printEvery;
   TolFun           = options.TolFun;
   TolOpt           = options.TolOpt;
   TolX             = options.TolX;
@@ -68,7 +66,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   Trace.funEvals   = zeros(maxIter+1,1);
   Trace.optimality = zeros(maxIter+1,1);
   
-  if display
+  if display > 0
     fprintf(' %s\n',repmat('=',1,56));
     fprintf('          QuasiNewton  v.%s (%s)\n', REVISION, DATE);
     fprintf(' %s\n',repmat('=',1,56));
@@ -87,7 +85,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     end
   end
   
-  % ------------ Start collecting data for display and output ------------ 
+  % ------------ Start collecting data for display > 0 and output ------------ 
   
   funEvals = 1;
   opt      = norm(Df,'inf');
@@ -96,7 +94,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   Trace.funEvals(1)   = funEvals;
   Trace.optimality(1) = opt;
   
-  if display
+  if display > 0
     fprintf(' %4d | %6d  %12s  %12.4e  %12.4e\n',...
       iter, funEvals, '', f, opt);
   end
@@ -114,7 +112,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     'Trace'     , Trace        ...
       );
   
-    if display
+    if display > 0
       fprintf(' %s\n',repmat('-',1,56));
       fprintf(' %s\n',MESSAGE_OPTIMAL);
       fprintf(' %s\n',repmat('-',1,56));
@@ -203,7 +201,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
       end
     end
     
-    % ------------ Collect data for display and output ------------
+    % ------------ Collect data for display > 0 and output ------------
     
     funEvals   = funEvals + LSiter;   
     opt = norm(Df,'inf');
@@ -212,7 +210,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     Trace.funEvals(iter+1)   = funEvals;
     Trace.optimality(iter+1) = opt;
     
-    if display && mod(iter,printEvery) == 0
+    if display > 0 && mod(iter,display) == 0
       fprintf(' %4d | %6d  %12.4e  %12.4e  %12.4e\n',...
         iter, funEvals, step, f, opt);
     end
@@ -253,7 +251,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   Trace.funEvals   = Trace.funEvals(1:iter+1);
   Trace.optimality = Trace.optimality(1:iter+1);
   
-  if display && mod(iter,printEvery) > 0
+  if display > 0 && mod(iter,display) > 0
     fprintf(' %4d | %6d  %12.4e  %12.4e  %12.4e\n',...
       iter, funEvals, step, f, opt);
   end
@@ -268,7 +266,7 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     'Trace'     , Trace    ...
     );
   
-  if display
+  if display > 0
     fprintf(' %s\n',repmat('-',1,56));
     fprintf(' %s\n',message)
     fprintf(' %s\n',repmat('-',1,56));

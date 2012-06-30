@@ -1,5 +1,5 @@
 function [M, Dh] = smoothDual(d, Be, x, nonsmoothF, v)
-% smoothedDual 
+% smoothDual :
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/06/24 $
 % 

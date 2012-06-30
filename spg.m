@@ -17,19 +17,16 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
 % ------------ Initialize ------------
   
-  n = length(x);
-
   % Set default options
   defaultOptions = SetPNoptOptions(...
-    'checkOpt'        , 1        ,... % Check optimality (requires prox evaluation)
-    'display'         , 1        ,... % display level 
-    'LSmemory'   , 10       ,... % Number of previous function values to save
-    'maxfunEvals'     , 50000    ,... % Max number of function evaluations
-    'maxIter'         , 5000     ,... % Max number of iterations
-    'printEvery'      , 100      ,... % display output every printEvery iterations
-    'TolFun'          , 1e-9     ,... % Stopping tolerance on objective function 
-    'TolOpt'          , 1e-6     ,... % Stopping tolerance on optimality
-    'TolX'            , 1e-9      ... % Stopping tolerance on solution
+    'checkOpt'    , 1     ,... % Check optimality (requires prox evaluation)
+    'display'     , 1     ,... % display > 0 level 
+    'LSmemory'    , 10    ,... % Number of previous function values to save
+    'maxfunEvals' , 50000 ,... % Max number of function evaluations
+    'maxIter'     , 5000  ,... % Max number of iterations
+    'TolFun'      , 1e-9  ,... % Stopping tolerance on objective function 
+    'TolOpt'      , 1e-6  ,... % Stopping tolerance on optimality
+    'TolX'        , 1e-9   ... % Stopping tolerance on solution
     );
   
   % Set stopping flags and messages
@@ -52,15 +49,14 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     options = defaultOptions;
   end
   
-  checkOpt         = options.checkOpt;
-  display          = options.display;
-  LSmemory = options.LSmemory;
-  maxfunEvals      = options.maxfunEvals;
-  maxIter          = options.maxIter;
-  printEvery       = options.printEvery;
-  TolFun           = options.TolFun;
-  TolOpt           = options.TolOpt;
-  TolX             = options.TolX;
+  checkOpt    = options.checkOpt;
+  display     = options.display;
+  LSmemory    = options.LSmemory;
+  maxfunEvals = options.maxfunEvals;
+  maxIter     = options.maxIter;
+  TolFun      = options.TolFun;
+  TolOpt      = options.TolOpt;
+  TolX        = options.TolX;
   
   iter            = 0; 
   Trace.f         = zeros(maxIter+1,1);
@@ -70,7 +66,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     Trace.optimality = zeros(maxIter+1,1);
   end
   
-  if display    
+  if display > 0    
     if checkOpt
       fprintf(' %s\n',repmat('=',1,64));
       fprintf('            SPG  v.%s (%s)\n', REVISION, DATE);
@@ -94,7 +90,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
    h      = nonsmoothF(x);
    f      = f + h;
   
-  % ------------ Start collecting data for display and output ------------ 
+  % ------------ Start collecting data for display > 0 and output ------------ 
   
   funEvals  = 1;
   proxEvals = 0;
@@ -111,7 +107,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     Trace.optimality(1) = opt; 
   end
   
-  if display    
+  if display > 0    
     if checkOpt
       fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, '', f, opt);
@@ -135,7 +131,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       'Trace'     , Trace        ...
       );
   
-    if display
+    if display > 0
       fprintf(' %s\n',repmat('-',1,64));
       fprintf(' %s\n',MESSAGE_OPTIMAL)
       fprintf(' %s\n',repmat('-',1,64));
@@ -176,7 +172,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       CurvySearch(x, -Df, BbStepLen, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
       TolX, maxfunEvals - funEvals); %#ok<ASGLU>
     
-    % ------------ Collect data and display status ------------
+    % ------------ Collect data and display > 0 status ------------
     
     funEvals  = funEvals + LSiter;
     proxEvals = proxEvals + LSiter;
@@ -193,7 +189,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       Trace.optimality(iter+1) = opt; 
     end
     
-    if display && mod(iter,printEvery) == 0
+    if display > 0 && mod(iter,display > 0) == 0
       if checkOpt
         fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
           iter, funEvals, proxEvals, step, f, opt);
@@ -242,7 +238,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     Trace.optimality = Trace.optimality(1:iter+1);
   end
   
-  if display && mod(iter,printEvery) > 0
+  if display > 0 && mod(iter,display > 0) > 0
     if checkOpt
       fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, step, f, opt);
@@ -264,7 +260,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
      output.Optimality = opt;
   end
   
-  if display
+  if display > 0
     if checkOpt
       fprintf(' %s\n',repmat('-',1,64));
       fprintf(' %s\n',message)

@@ -1,4 +1,4 @@
-function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
+function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 % ProxNewton : Proximal Newton-type methods
 % 
 % [x, f, output] = ProxNewton(smoothF, nonsmoothF, x) starts at x and seeks a
@@ -72,7 +72,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, varargin)
   
   % Replace default option values with values in user-supplied options struct
   if nargin > 3
-    options = SetPNoptOptions(defaultOptions, varargin{1});
+    options = SetPNoptOptions(defaultOptions, options);
   else
     options = defaultOptions;
   end

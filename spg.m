@@ -1,4 +1,4 @@
-function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
+function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
 % Spg : Spectral proximal gradient methods
 % 
 % [x, f, output] = Spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
@@ -44,7 +44,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   
   % Replace default option values with values in user-supplied options struct
   if nargin > 3
-    options = SetSpgOptions(defaultOptions, varargin{1});
+    options = SetSpgOptions(defaultOptions, options);
   else
     options = defaultOptions;
   end

@@ -1,4 +1,4 @@
-function [x, f, output] = QuasiNewton(fun, x, varargin)
+function [x, f, output] = QuasiNewton(fun, x, options)
 % QuasiNewton : Quasi-Newton Methods
 % 
 % [x, f, output] = QuasiNewton(fun, x) starts at x and seeks a minimizer of the
@@ -42,7 +42,7 @@ function [x, f, output] = QuasiNewton(fun, x, varargin)
   
   % Replace default option values with values in user-supplied options struct
   if nargin > 2
-    options = SetPNoptOptions(defaultOptions, varargin{1});
+    options = SetPNoptOptions(defaultOptions, options);
   else
     options = defaultOptions;
   end

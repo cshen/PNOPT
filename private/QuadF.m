@@ -9,7 +9,7 @@ function [f, Df] = QuadF(Hx, g, x, y)
   elseif isa(Hx,'numeric')
     Hdx = Hx*dx;
   else
-    error('QuadF:BadHx', 'First argument must be a function handle or numeric array')
+    error('QuadF:BadQuad', 'First argument must be a function handle or numeric array')
   end
   f   = 0.5*dx'*Hdx + g'*dx;
   Df  = Hdx + g;

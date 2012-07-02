@@ -16,13 +16,12 @@ function options = SetPNoptOptions(varargin)
     fprintf('  Default parameters for PNopt.m:\n');
     fprintf('          checkOpt : [          logical |          1 ] \n');
     fprintf('           display : [ positive integer |         10 ] \n');
-    fprintf('  LbfgsCorrections : [ positive integer |         10 ] \n');
+    fprintf('  LbfgsCorrections : [ positive integer |      20/50 ] \n');
     fprintf('          LSmemory : [ positive integer |         10 ] \n');
     fprintf('       maxfunEvals : [ positive integer |       5000 ] \n');
     fprintf('           maxIter : [ positive integer |        500 ] \n');
     fprintf('            method : [ string           |      Lbfgs ] \n');
-    fprintf('  aubproblemMethod : [ string           |      Tfocs ] \n');
-    fprintf('        spgOptions : [ struct           | spgOptions ] \n');
+    fprintf('  subproblemMethod : [ string           |      Tfocs ] \n');
     fprintf('         TfocsOpts : [ struct           |  TfocsOpts ] \n');
     fprintf('            TolFun : [ positive scalar  |       1e-9 ] \n');
     fprintf('            TolOpt : [ positive scalar  |       1e-6 ] \n');

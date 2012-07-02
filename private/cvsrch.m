@@ -1,4 +1,4 @@
-      function [x,f,g,stp,info,nfev] = cvsrch(fun,x,f,g,s,stp,...
+      function varargout = cvsrch(fun,x,f,g,s,stp,...
                  xtol, maxfev)
 %   Translation of MINPACK subroutine cvsrch
 %   Dianne O'Leary        Jul. 1991
@@ -196,7 +196,11 @@
 %        and compute the directional derivative.
 %
          x = wa + stp * s;
-         [f, g] = fun(x);
+         if nargout > 6
+           [f, g, H] = fun(x);
+         else
+           [f, g] = fun(x);
+         end
          nfev = nfev + 1;
          dg = g' * s;
          ftest1 = finit + stp*dgtest;       
@@ -222,7 +226,7 @@
 %        Check for termination.
 %
          if (info ~= 0) 
-                  return
+                  break
          end
 %
 %        In the first stage we seek a step for which the modified
@@ -285,6 +289,12 @@
 %
 %        End of iteration.
 %
+   end
+
+   if nargout > 6
+     varargout = {x,f,g,H,stp,info,nfev};
+   else
+     varargout = {x,f,g,stp,info,nfev};
    end
 %
 %     Last card of subroutine cvsrch.

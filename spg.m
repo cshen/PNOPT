@@ -2,25 +2,25 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
 % Spg : Spectral proximal gradient methods
 % 
 % [x, f, output] = Spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
-%   of the objective function. smoothF is a handle to a function that returns the
-%   smooth function value and gradient. nonsmoothF is a handle to a function that
-%   returns the nonsmooth function value and prox.
+%   of the objective function in composite form. smoothF is a handle to a function
+%   that returns the smooth function value and gradient. nonsmoothF is a handle 
+%   to a function that returns the nonsmooth function value and prox.
 % 
 % [x, f, output] = Spg(smoothF, nonsmoothF, x, options) replaces the default 
-%   optimization options replaced with values in options, a structure created 
-%   using the SetPNoptOptions function.
+%   optimization options with those in options, a structure created using the 
+%   SetPNoptOptions function.
 % 
   REVISION = '$Revision: 0.1.6$';
   DATE     = '$Date: June 24, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
-% ------------ Initialize ------------
+% ============ Initialize ============
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
     'checkOpt'    , 1     ,... % Check optimality (requires prox evaluation)
-    'display'     , 1     ,... % display > 0 level 
+    'display'     , 1     ,... % display frequency (<= 0 for no display) 
     'LSmemory'    , 10    ,... % Number of previous function values to save
     'maxfunEvals' , 50000 ,... % Max number of function evaluations
     'maxIter'     , 5000  ,... % Max number of iterations
@@ -59,6 +59,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   TolX        = options.TolX;
   
   iter            = 0; 
+  loop            = 1; 
   Trace.f         = zeros(maxIter+1,1);
   Trace.funEvals  = zeros(maxIter+1,1);
   Trace.proxEvals = zeros(maxIter+1,1);
@@ -84,13 +85,13 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     end
   end
   
-  % ------------ Evaluate objective function at starting x ------------ 
+  % ============ Evaluate objective function at starting x ============ 
   
   [f, Df] = smoothF(x);
    h      = nonsmoothF(x);
    f      = f + h;
   
-  % ------------ Start collecting data for display > 0 and output ------------ 
+  % ============ Start collecting data for display and output ============ 
   
   funEvals  = 1;
   proxEvals = 0;
@@ -117,32 +118,17 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
     end
   end
   
-  % ------------ Check if starting x is optimal ------------ 
+  % ============ Check if starting x is optimal ============ 
   
   if checkOpt && opt <= TolOpt
-    output = struct(...
-      'flag'      , FLAG_OPTIMAL,...
-      'funEvals'  , funEvals    ,...
-      'iterations', iter        ,...
-      'method'    , method      ,...
-      'optimality', opt         ,...
-      'options'   , options     ,...
-      'proxEvals' , proxEvals   ,...
-      'Trace'     , Trace        ...
-      );
-  
-    if display > 0
-      fprintf(' %s\n',repmat('-',1,64));
-      fprintf(' %s\n',MESSAGE_OPTIMAL)
-      fprintf(' %s\n',repmat('-',1,64));
-    end
-    
-    return
+    flag    = FLAG_OPTIMAL;
+    message = MESSAGE_OPTIMAL;
+    loop    = 0;
   end
 
-% ------------ Main Loop -------------
+% ============ Main Loop ============
   
-  while 1
+  while loop
     iter = iter+1; 
     
     % ------------ Compute search direction ------------
@@ -158,7 +144,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       BbStepLen = min(1,1/norm(Df,1));
     end
     
-    % ------------ Conduct line search ------------    
+    % ------------ Conduct line search ------------
     xPrev   = x;
     if iter+1 > LSmemory
       fPrev = [fPrev(2:end), f];
@@ -172,7 +158,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       CurvySearch(x, -Df, BbStepLen, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
       TolX, maxfunEvals - funEvals); %#ok<ASGLU>
     
-    % ------------ Collect data and display > 0 status ------------
+    % ------------ Collect data and display status ------------
     
     funEvals  = funEvals + LSiter;
     proxEvals = proxEvals + LSiter;
@@ -199,37 +185,37 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
       end
     end
     
-    % ------------Check stopping criteria------------
+    % ------------ Check stopping criteria ------------
     
     % Check optimality condition
     if checkOpt && opt <= TolOpt
       flag    = FLAG_OPTIMAL;
       message = MESSAGE_OPTIMAL;
-      break
+      loop    = 0;
       
     % Check lack of progress
-    elseif norm(x-xPrev)/max(1,norm(xPrev)) <= TolX 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= TolX 
       flag    = FLAG_TOLX;
       message = MESSAGE_TOLX;
-      break
+      loop    = 0;
     elseif f <= min(fPrev) && abs(min(fPrev)-f)/max(1,abs(fPrev(end))) <= TolFun
       flag    = FLAG_TOLFUN;
       message = MESSAGE_TOLFUN;
-      break
+      loop    = 0;
       
     % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
       message = MESSAGE_MAXITER;
-      break
+      loop    = 0;
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
       message = MESSAGE_MAXFUNEVALS;
-      break
+      loop    = 0;
     end
   end
   
-  % -------------------- Cleanup and exit --------------------
+  % ============ Cleanup and exit ============
   
   Trace.f         = Trace.f(1:iter+1);
   Trace.funEvals  = Trace.funEvals(1:iter+1);
@@ -249,12 +235,12 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, varargin)
   end
   
   output = struct(...
-    'flag'      , flag     ,...
-    'funEvals'  , funEvals ,...
-    'iterations', iter     ,...
-    'options'   , options  ,...
-    'proxEvals' , proxEvals,...
-    'Trace'     , Trace     ...
+    'flag'      , flag      ,...
+    'funEvals'  , funEvals  ,...
+    'iterations', iter      ,...
+    'options'   , options   ,...
+    'proxEvals' , proxEvals ,...
+    'Trace'     , Trace      ...
     );
   if checkOpt
      output.Optimality = opt;

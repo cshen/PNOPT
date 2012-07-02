@@ -1,10 +1,10 @@
-function [xt, ft, Dft, t, flag ,iter] = CurvySearch ...
-  (x, d, t, f, gtd, smoothF, nonsmoothF, TolX, maxIter)
+function varargout = ...
+  CurvySearch(x, d, t, f, gtd, smoothF, nonsmoothF, TolX, maxIter)
 % CurvySearch : Curve search for step that satisfies the Armijo condition
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
 
-% --------------------Initialize--------------------
+% ------------ Initialize ------------
   % Set line search parameters
   al = 0.0001;
   be = 0.5;
@@ -16,14 +16,18 @@ function [xt, ft, Dft, t, flag ,iter] = CurvySearch ...
 
   iter = 0;
   
-  % --------------------Main Loop--------------------
+  % ------------ Main Loop ------------
   while 1
+    iter = iter + 1;
+    
     % Evaluate trial point and function value.
     [ht, xt]  = nonsmoothF(x+t*d, t);
-    [ft, Dft] = smoothF(xt);
-     ft       = ft + ht;
-     
-    iter = iter + 1;
+    if nargout > 6
+      [ft, Dft, Hft] = smoothF(xt);
+    else
+      [ft, Dft] = smoothF(xt);
+    end
+    ft = ft + ht;
     
     % Check termination criteria
     De = 0.5*norm(xt-x)^2;
@@ -50,6 +54,11 @@ function [xt, ft, Dft, t, flag ,iter] = CurvySearch ...
         t = be*t;
       end
     end
-
   end 
+  
+  if nargout > 6
+    varargout = {xt, ft, Dft, Hft, t, flag ,iter};
+  else
+    varargout = {xt, ft, Dft, t, flag ,iter};
+  end
   

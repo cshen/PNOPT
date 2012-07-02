@@ -14,3 +14,4 @@ function [f, Df] = QuadF(Hx, g, x, y)
   f   = 0.5*dx'*Hdx + g'*dx;
   Df  = Hdx + g;
   
+  

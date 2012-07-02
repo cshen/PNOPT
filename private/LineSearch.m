@@ -1,5 +1,5 @@
-function [xt, ft, ht, Dft, t, Flag ,iter] = LineSearch ...
-  (x, d, t, f, nonsmoothf, gtd, smoothF, nonsmoothF, TolX, maxIter)
+function varargout = ...
+  LineSearch(x, d, t, f, nonsmoothf, gtd, smoothF, nonsmoothF, TolX, maxIter)
 % LineSearch : Line search for step that satisfies a sufficient descent
 %   condition.
 % 
@@ -21,24 +21,28 @@ function [xt, ft, ht, Dft, t, Flag ,iter] = LineSearch ...
 
   % --------------------Main Loop--------------------
   while 1
+    iter = iter + 1;
+    
     % Evaluate trial point and function value.
      xt = x+d*t;
-    [ft, Dft] = smoothF(xt);
+    if nargout > 6
+      [ft, Dft, Hft] = smoothF(xt);
+    else
+      [ft, Dft] = smoothF(xt);
+    end
      ht       = nonsmoothF(xt);
      ft       = ft + ht;
-     
-    iter = iter + 1;
     
     % Check termination criteria
     De = gtd + Nonsmoothf1 - nonsmoothf;
     if ft < f + al*t*De             % Sufficient descent condition satisfied
-      Flag = FLAG_SUFFDESCENT;  
+      flag = FLAG_SUFFDESCENT;  
       break
     elseif t <= TolX                % Step length too small
-      Flag = FLAG_TOLX;
+      flag = FLAG_TOLX;
       break
     elseif iter >= maxIter  % Too many linesearch iterations.
-      Flag = FLAG_MAXFUNEVALS;
+      flag = FLAG_MAXFUNEVALS;
       break
     end
 
@@ -56,4 +60,11 @@ function [xt, ft, ht, Dft, t, Flag ,iter] = LineSearch ...
     end
 
   end 
+  
+  if nargout > 6
+    varargout = {xt, ft, Dft, Hft, t, flag ,iter};
+  else
+    varargout = {xt, ft, Dft, t, flag ,iter};
+  end
+  
   

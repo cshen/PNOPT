@@ -1,31 +1,30 @@
-function [x, f, output] = QuasiNewton(Fun, x, varargin)
-% QN : Quasi-Newton Methods
+function [x, f, output] = QuasiNewton(fun, x, varargin)
+% QuasiNewton : Quasi-Newton Methods
 % 
 % [x, f, output] = QuasiNewton(fun, x) starts at x and seeks a minimizer of the
 %   objective function. fun is a handle to a function that returns the objective
 %   function value and gradient.
 % 
-% [x, f, output] = QuasiNewton(fun, x, options) replaces the default 
-%   optimization options replaced with values in options, a struct created using
-%   the SetNewtonOptions function.
+% [x, f, output] = QuasiNewton(fun, x, options) replaces the default options 
+%   with those in options, a struct created using the SetPNoptOptions function.
 % 
   REVISION = '$Revision: 0.2.0$';
   DATE     = '$Date: June 24, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
-% ------------ Initialize ------------
+% ============ Initialize ============
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
-    'display'         , 10     ,... % display > 0 level
-    'LbfgsCorrections', 50     ,... % Number of L-BFGS corrections
-    'maxfunEvals'     , 50000  ,... % Max number of function evaluations
-    'maxIter'         , 500    ,... % Max number of iterations
-    'method'          , 'Lbfgs',... % method for choosing search directions
-    'TolFun'          , 1e-9   ,... % Stopping tolerance on objective function 
-    'TolOpt'          , 1e-6   ,... % Stopping tolerance on optimality
-    'TolX'            , 1e-9    ... % Stopping tolerance on solution
+    'display'         , 10      ,... % display frequency (<= 0 for no display) 
+    'LbfgsCorrections', 50      ,... % Number of L-BFGS corrections
+    'maxfunEvals'     , 50000   ,... % Max number of function evaluations
+    'maxIter'         , 500     ,... % Max number of iterations
+    'method'          , 'Lbfgs' ,... % method for choosing search directions
+    'TolFun'          , 1e-9    ,... % Stopping tolerance on objective function 
+    'TolOpt'          , 1e-6    ,... % Stopping tolerance on optimality
+    'TolX'            , 1e-9     ... % Stopping tolerance on solution
     );
   
   % Set stopping flags and messages
@@ -56,12 +55,9 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   TolFun           = options.TolFun;
   TolOpt           = options.TolOpt;
   TolX             = options.TolX;
-    
-  if strcmp(method,'Newton')
-    Hess = options.Hess;
-  end
   
   iter             = 0; 
+  loop             = 1;
   Trace.f          = zeros(maxIter+1,1);
   Trace.funEvals   = zeros(maxIter+1,1);
   Trace.optimality = zeros(maxIter+1,1);
@@ -75,17 +71,15 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     fprintf(' %s\n',repmat('-',1,56));
   end
   
-  % ------------ Evaluate objective function at starting x ------------ 
+  % ============ Evaluate objective function at starting x ============ 
   
-  [f, Df] = Fun(x);
-  if strcmp(method,'Newton')  % Evaluate Hessian if necessary.
-    Hf    = Hess(x);
-    if ~isa(Hf,'numeric') && ~isa(Hf,'function_handle')
-      error('QuasiNewton:BadHess', 'options.Hess must be a function handle or numeric array')
-    end
+  if strcmp(method,'Newton')  
+    [f, Df, Hf] = fun(x);
+  else
+    [f, Df] = fun(x);
   end
   
-  % ------------ Start collecting data for display > 0 and output ------------ 
+  % ============ Start collecting data for display and output ============ 
   
   funEvals = 1;
   opt      = norm(Df,'inf');
@@ -99,31 +93,17 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
       iter, funEvals, '', f, opt);
   end
   
-  % ------------ Check if starting x is optimal ------------ 
+  % ============ Check if starting x is optimal ============ 
   
   if opt <= TolOpt      
-    output = struct(...
-    'flag'      , FLAG_OPTIMAL,...
-    'funEvals'  , funEvals    ,...
-    'iterations', iter        ,...
-    'method'    , method      ,...
-    'optimality', opt         ,...
-    'options'   , options     ,...
-    'Trace'     , Trace        ...
-      );
-  
-    if display > 0
-      fprintf(' %s\n',repmat('-',1,56));
-      fprintf(' %s\n',MESSAGE_OPTIMAL);
-      fprintf(' %s\n',repmat('-',1,56));
-    end
-  
-    return
+    flag    = FLAG_OPTIMAL;
+    message = MESSAGE_OPTIMAL;
+    loop    = 0;
   end
   
-% ------------ Main Loop -------------
+% ============ Main Loop ============
   
-  while 1
+  while loop
     iter = iter+1; 
     
     % ------------ Compute search direction ------------
@@ -186,22 +166,18 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     DfPrev = Df;
     
     % Conduct line search for a step length that safisfies the Wolfe conditions
-    if iter > 1 
+    if strcmp(method,'Newton')
+      [x, f, Df, Hf, step, ~, LSiter] = ...
+        cvsrch(fun, x, f, Df, Dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+    elseif iter > 1 
       [x, f, Df, step, ~, LSiter] = ...
-        cvsrch(Fun, x, f, Df, Dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+        cvsrch(fun, x, f, Df, Dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
     else
       [x, f, Df, step, ~, LSiter] = ...
-        cvsrch(Fun, x, f, Df, Dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
+        cvsrch(fun, x, f, Df, Dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
     end
     
-    if strcmp(method,'Newton')  % Evaluate Hessian if necessary.
-      Hf = Hess(x);
-      if ~isa(Hf,'numeric') && ~isa(Hf,'function_handle') 
-        error('QuasiNewton:BadHess', 'options.Hess must be a function handle or numeric array')
-      end
-    end
-    
-    % ------------ Collect data for display > 0 and output ------------
+    % ------------ Collect data for display and output ------------
     
     funEvals   = funEvals + LSiter;   
     opt = norm(Df,'inf');
@@ -221,31 +197,31 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
     if opt <= TolOpt
       flag    = FLAG_OPTIMAL;
       message = MESSAGE_OPTIMAL;
-      break
+      loop    = 0;
       
     % Check lack of progress
-    elseif norm(x-xPrev)/max(1,norm(xPrev)) <= TolX 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= TolX 
       flag    = FLAG_TOLX;
       message = MESSAGE_TOLX;
-      break
+      loop    = 0;
     elseif f <= fPrev && (fPrev-f)/max(1,abs(fPrev)) <= TolFun
       flag    = FLAG_TOLFUN;
       message = MESSAGE_TOLFUN;
-      break
+      loop    = 0;
       
     % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
       message = MESSAGE_MAXITER;
-      break
+      loop    = 0;
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
       message = MESSAGE_MAXFUNEVALS;
-      break
+      loop    = 0;
     end
   end
   
-  % -------------------- Cleanup and exit --------------------
+  % ============ Cleanup and exit ============
   
   Trace.f          = Trace.f(1:iter+1);
   Trace.funEvals   = Trace.funEvals(1:iter+1);
@@ -257,13 +233,12 @@ function [x, f, output] = QuasiNewton(Fun, x, varargin)
   end
       
   output = struct(...
-    'flag'      , flag    ,...
-    'funEvals'  , funEvals,...
-    'iterations', iter    ,...
-    'method'    , method  ,...
-    'optimality', opt     ,...
-    'options'   , options ,...
-    'Trace'     , Trace    ...
+    'flag'      , flag     ,...
+    'funEvals'  , funEvals ,...
+    'iterations', iter     ,...
+    'optimality', opt      ,...
+    'options'   , options  ,...
+    'Trace'     , Trace     ...
     );
   
   if display > 0

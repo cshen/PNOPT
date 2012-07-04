@@ -11,10 +11,10 @@ function [M, Dh] = smoothDual(d, Q, x, nonsmoothF, v)
       R  = Q;
       Dh = -w + R\(R'\v) + x;
     else
-      error('smoothDual:BadQuad', 'Second argument must be a Cholesky factor if a numeric array.')
+      error('smoothDual:badMat', 'Second argument must be a Cholesky factor if a numeric array.')
     end
   else
-    error('smoothDual:BadQuad', 'Second argument must be a function handle or Cholesky factor.')
+    error('smoothDual:badMat', 'Second argument must be a function handle or Cholesky factor.')
   end
   M      = 0.5*norm(Dh)^2;
   

@@ -118,10 +118,10 @@ function [x, f, output] = QuasiNewton(fun, x, options)
           if s'*y > 1e-9
             R = cholupdate(cholupdate(R, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
           end
-          Dx = -R\(R'\Df);
+          dx = -R\(R'\Df);
         else
           R  = eye(length(x));
-          Dx = -Df;
+          dx = -Df;
         end
         
       % Limited-memory BFGS method
@@ -141,21 +141,21 @@ function [x, f, output] = QuasiNewton(fun, x, options)
             end
           end
           
-          Dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
+          dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
         else
           sPrev = zeros(length(x), 0);
           yPrev = zeros(length(x), 0);
           et    = 1;
-          Dx    = -Df;
+          dx    = -Df;
         end
         
       % Newton's method
       case 'Newton'
         % If Hf is a function handle, use pcg to solve Newton system inexactly.
         if isa(Hf,'function_handle')
-          Dx = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
+          dx = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
         elseif isa(Hf,'numeric')
-          Dx = Hf\(-Df);
+          dx = Hf\(-Df);
         end
     end
     
@@ -168,13 +168,13 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     % Conduct line search for a step length that safisfies the Wolfe conditions
     if strcmp(method,'Newton')
       [x, f, Df, Hf, step, ~, LSiter] = ...
-        cvsrch(fun, x, f, Df, Dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+        cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
     elseif iter > 1 
       [x, f, Df, step, ~, LSiter] = ...
-        cvsrch(fun, x, f, Df, Dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+        cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
     else
       [x, f, Df, step, ~, LSiter] = ...
-        cvsrch(fun, x, f, Df, Dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
+        cvsrch(fun, x, f, Df, dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
     end
     
     % ------------ Collect data for display and output ------------

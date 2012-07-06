@@ -10,8 +10,8 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 %   default optimization options with those in options, a structure created 
 %   using the SetPNoptOptions function.
 % 
-  REVISION = '$Revision: 0.2.0$';
-  DATE     = '$Date: June 24, 2012$';
+  REVISION = '$Revision: 0.2.1$';
+  DATE     = '$Date: June 30, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
@@ -44,6 +44,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   % Set default options
   defaultOptions = SetPNoptOptions(...
     'checkOpt'         , 1          ,... % Check optimality (requires prox evaluation)
+    'debug'            , 0          ,... % debug mode 
     'display'          , 10         ,... % display frequency (<= 0 for no display) 
     'LbfgsCorrections' , 20         ,... % Number of L-BFGS corrections
     'maxfunEvals'      , 5000       ,... % Max number of function evaluations
@@ -77,24 +78,25 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     options = defaultOptions;
   end
   
-  checkOpt          = options.checkOpt;
-  display           = options.display;
-  LbfgsCorrections  = options.LbfgsCorrections;
-  maxfunEvals       = options.maxfunEvals;
-  maxIter           = options.maxIter;
-  method            = options.method;
-  subproblemMethod  = options.subproblemMethod;
-  TolFun            = options.TolFun;
-  TolOpt            = options.TolOpt;
-  TolX              = options.TolX;
+  checkOpt         = options.checkOpt;
+  debug            = options.debug;
+  display          = options.display;
+  LbfgsCorrections = options.LbfgsCorrections;
+  maxfunEvals      = options.maxfunEvals;
+  maxIter          = options.maxIter;
+  method           = options.method;
+  subproblemMethod = options.subproblemMethod;
+  TolFun           = options.TolFun;
+  TolOpt           = options.TolOpt;
+  TolX             = options.TolX;
   
   switch subproblemMethod
     case 'spg'
-      spgOptions    = options.BbOptions;
-      SubproblemTol = spgOptions.TolOpt;
+      spgOptions = options.BbOptions;
+      TolSub     = spgOptions.TolOpt;
     case 'Tfocs'
-      TfocsOpts     = options.TfocsOpts;
-      SubproblemTol = TfocsOpts.tol;
+      TfocsOpts = options.TfocsOpts;
+      TolSub    = TfocsOpts.tol;
   end
   
   iter            = 0; 
@@ -104,6 +106,13 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   Trace.proxEvals = zeros(maxIter+1,1);
   if checkOpt
     Trace.optimality = zeros(maxIter+1,1);
+  end
+  
+  if debug
+    Trace.dx              = zeros(maxIter,1);
+    Trace.lineSearchFlag  = zeros(maxIter,1);
+    Trace.lineSearchIters = zeros(maxIter,1);
+    Trace.TolSub          = zeros(maxIter,1);
   end
   
   if display > 0  
@@ -197,6 +206,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
           
         else
           R  = eye(length(x));
+          dx = -Df;
         end
 
       % Limited-memory BFGS method
@@ -204,7 +214,6 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
         if iter > 1
           s =  x - xPrev;
           y = Df - DfPrev;
-          
           if y'*s > 1e-9
             if size(sPrev,2) > LbfgsCorrections
               sPrev = [sPrev(:,2:LbfgsCorrections), s];
@@ -216,9 +225,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
               et    = (y'*y)/(y'*s);
             end
           end
-          
-          Hf = LbfgsProd(sPrev, yPrev, et);
-          
+          Hf   = LbfgsProd(sPrev, yPrev, et);
           if strcmp(subproblemMethod,'smoothDual')
             B  = @(x) LbfgsSearchDir(sPrev, yPrev, et, -x);
             Dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
@@ -227,6 +234,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
           sPrev = zeros(length(x), 0);
           yPrev = zeros(length(x), 0);
           et    = 1;
+          dx    = -Df;
         end
       
       % Newton's method
@@ -242,30 +250,30 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
       switch subproblemMethod
         case 'spg'
           spgOptions = SetPNoptOptions(spgOptions,...
-            'TolOpt', SubproblemTol ...
+            'TolOpt', TolSub ...
             );
           
-          [z, ~, spgOutput] = ...
-            spg(@(z) QuadF(Hf, Df, x ,z), nonsmoothF, x, spgOptions);
+          [z, fz, spgOutput] = ...
+            spg(@(z) QuadF(Hf, Df, x ,z), nonsmoothF, x, spgOptions); %#ok<ASGLU>
           
           proxEvals = proxEvals + spgOutput.proxEvals;
           
           % If SPG stops early, then make stopping tolerance smaller.     
           if spgOutput.iterations < spgOptions.maxIter  
-            SubproblemTol  = max(0.5*SubproblemTol, TolOpt);     
+            TolSub  = max(0.5*TolSub, TolOpt);     
           end
           
         case 'smoothDual' % doesn't fucking work
           d = 1;
           
-          [v, ~, QNoutput] = ...
-            QuasiNewton(@(v) smoothDual(d, B, x+Dx, nonsmoothF, v), x+Dx, QNoptions);
+          [v, Mv, QNoutput] = ...
+            QuasiNewton(@(v) smoothDual(d, B, x+Dx, nonsmoothF, v), x+Dx, QNoptions); %#ok<ASGLU>
           [~, z] = nonsmoothF(x+Dx-v/d,1/d);
           
           proxEvals = proxEvals + QNoutput.funEvals;
           
         case 'Tfocs'
-          TfocsOpts.tol = SubproblemTol;
+          TfocsOpts.tol = TolSub;
           
           [z, TfocsOut] = ...
             tfocs(@(z) QuadF(Hf, Df, x ,z), [], nonsmoothF, x, TfocsOpts);
@@ -277,9 +285,11 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
           end
           
           if TfocsOut.niter < TfocsOpts.maxIts  
-            SubproblemTol = max(0.5*SubproblemTol, TolX);
+            TolSub = max(0.5*TolSub, TolX);
           end
       end
+      
+      dx   = z-x;
     end
     
     % ------------ Conduct line search ------------
@@ -287,25 +297,27 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     fPrev  = f;
     DfPrev = Df;
     
+    
+    
     % Conduct line search for a step length that safisfies the Armijo condition
     if strcmp(method,'Newton')
-      [x, f, Df, Hf, step, LSflag ,LSiter] = ...
-        LineSearch(x, z-x, 1, f, h, Df'*(z-x), smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals); %#ok<ASGLU>
+      [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
+        LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
+        TolX, maxfunEvals - funEvals); 
     elseif iter > 1 
-      [x, f, Df, step, LSflag ,LSiter] = ...
-        LineSearch(x, z-x, 1, f, h, Df'*(z-x), smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals); %#ok<ASGLU>
+      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+        LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
+        TolX, maxfunEvals - funEvals); 
     else
-      [x, f, Df, step, LSflag ,LSiter] = ...
-        CurvySearch(x, -Df, min(1,1/norm(Df,1)), f, -norm(Df)^2, smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals); %#ok<ASGLU>          
+      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+        CurvySearch(x, dx, min(1,1/norm(Df,1)), f, Df'*dx, smoothF, nonsmoothF,...
+        TolX, maxfunEvals - funEvals);           
     end 
     
     % ------------ Collect data for display and output ------------
     
-    funEvals  = funEvals + LSiter;
-    proxEvals = proxEvals + LSiter;
+    funEvals  = funEvals + lineSearchIters;
+    proxEvals = proxEvals + lineSearchIters;
     if checkOpt
       [h1, x1]  = nonsmoothF(x-Df,1); %#ok<ASGLU>
       proxEvals = proxEvals + 1;
@@ -317,6 +329,13 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     Trace.proxEvals(iter+1) = proxEvals;
     if checkOpt
       Trace.optimality(iter+1) = opt; 
+    end
+    
+    if debug
+      Trace.dx(iter)              = norm(dx);
+      Trace.lineSearchFlag(iter)  = lineSearchFlag;
+      Trace.lineSearchIters(iter) = lineSearchIters;
+      Trace.TolSub(iter)          = TolSub;
     end
     
     if display > 0 && mod(iter,display) == 0
@@ -366,6 +385,13 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   Trace.proxEvals = Trace.proxEvals(1:iter+1);
   if checkOpt
     Trace.optimality = Trace.optimality(1:iter+1);
+  end
+  
+  if debug
+    Trace.dx              = Trace.dx(1:iter);
+    Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
+    Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
+    Trace.TolSub          = Trace.TolSub(1:iter);
   end
   
   if display > 0 && mod(iter,display) > 0

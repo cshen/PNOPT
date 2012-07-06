@@ -20,6 +20,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   % Set default options
   defaultOptions = SetPNoptOptions(...
     'checkOpt'    , 1     ,... % Check optimality (requires prox evaluation)
+    'debug'       , 0     ,... % debug mode 
     'display'     , 1     ,... % display frequency (<= 0 for no display) 
     'LSmemory'    , 10    ,... % Number of previous function values to save
     'maxfunEvals' , 50000 ,... % Max number of function evaluations
@@ -50,6 +51,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   end
   
   checkOpt    = options.checkOpt;
+  debug            = options.debug;
   display     = options.display;
   LSmemory    = options.LSmemory;
   maxfunEvals = options.maxfunEvals;
@@ -65,6 +67,12 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   Trace.proxEvals = zeros(maxIter+1,1);
   if checkOpt
     Trace.optimality = zeros(maxIter+1,1);
+  end
+  
+  if debug
+    Trace.dx              = zeros(maxIter,1);
+    Trace.lineSearchFlag  = zeros(maxIter,1);
+    Trace.lineSearchIters = zeros(maxIter,1);
   end
   
   if display > 0    
@@ -154,14 +162,14 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     DfPrev  = Df;
     
     % Conduct line search for a step length that safisfies the Armijo condition
-    [x, f, Df, step, LSflag ,LSiter] = ...
+    [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
       CurvySearch(x, -Df, BbStepLen, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
-      TolX, maxfunEvals - funEvals); %#ok<ASGLU>
+      TolX, maxfunEvals - funEvals); 
     
     % ------------ Collect data and display status ------------
     
-    funEvals  = funEvals + LSiter;
-    proxEvals = proxEvals + LSiter;
+    funEvals  = funEvals + lineSearchIters;
+    proxEvals = proxEvals + lineSearchIters;
     if checkOpt
       [h1, x1] = nonsmoothF(x-Df,1); %#ok<ASGLU>
       proxEvals = proxEvals + 1;
@@ -173,6 +181,12 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     Trace.proxEvals(iter+1) = proxEvals;
     if checkOpt
       Trace.optimality(iter+1) = opt; 
+    end
+    
+    if debug
+      Trace.dx(iter)              = norm(Df);
+      Trace.lineSearchFlag(iter)  = lineSearchFlag;
+      Trace.lineSearchIters(iter) = lineSearchIters;
     end
     
     if display > 0 && mod(iter,display > 0) == 0
@@ -222,6 +236,12 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   Trace.proxEvals = Trace.proxEvals(1:iter+1);
   if checkOpt
     Trace.optimality = Trace.optimality(1:iter+1);
+  end
+  
+  if debug
+    Trace.dx              = Trace.dx(1:iter);
+    Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
+    Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
   end
   
   if display > 0 && mod(iter,display > 0) > 0

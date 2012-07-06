@@ -8,8 +8,8 @@ function [x, f, output] = QuasiNewton(fun, x, options)
 % [x, f, output] = QuasiNewton(fun, x, options) replaces the default options 
 %   with those in options, a struct created using the SetPNoptOptions function.
 % 
-  REVISION = '$Revision: 0.2.0$';
-  DATE     = '$Date: June 24, 2012$';
+  REVISION = '$Revision: 0.2.1$';
+  DATE     = '$Date: June 30, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
@@ -17,6 +17,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
+    'debug'           , 0       ,... % debug mode 
     'display'         , 10      ,... % display frequency (<= 0 for no display) 
     'LbfgsCorrections', 50      ,... % Number of L-BFGS corrections
     'maxfunEvals'     , 50000   ,... % Max number of function evaluations
@@ -47,8 +48,9 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     options = defaultOptions;
   end
   
-  LbfgsCorrections = options.LbfgsCorrections;
+  debug            = options.debug;
   display          = options.display;
+  LbfgsCorrections = options.LbfgsCorrections;
   maxfunEvals      = options.maxfunEvals;
   maxIter          = options.maxIter;
   method           = options.method;
@@ -61,6 +63,13 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   Trace.f          = zeros(maxIter+1,1);
   Trace.funEvals   = zeros(maxIter+1,1);
   Trace.optimality = zeros(maxIter+1,1);
+  Trace.step       = zeros(maxIter,1);
+  
+  if debug
+    Trace.dx              = zeros(maxIter,1);
+    Trace.lineSearchFlag  = zeros(maxIter,1);
+    Trace.lineSearchIters = zeros(maxIter,1);
+  end
   
   if display > 0
     fprintf(' %s\n',repmat('=',1,56));
@@ -112,8 +121,8 @@ function [x, f, output] = QuasiNewton(fun, x, options)
       % BFGS method
       case 'bfgs'
         if iter > 1
-          s = x-xPrev;
-          y = Df-DfPrev;
+          s =  x - xPrev;
+          y = Df - DfPrev;
           qty1 = R'*(R*s);
           if s'*y > 1e-9
             R = cholupdate(cholupdate(R, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
@@ -127,8 +136,8 @@ function [x, f, output] = QuasiNewton(fun, x, options)
       % Limited-memory BFGS method
       case 'Lbfgs'
         if iter > 1
-          s = x-xPrev;
-          y = Df-DfPrev;
+          s =  x - xPrev;
+          y = Df - DfPrev;
           if y'*s > 1e-9
             if size(sPrev,2) > LbfgsCorrections
               sPrev = [sPrev(:,2:LbfgsCorrections), s];
@@ -140,7 +149,6 @@ function [x, f, output] = QuasiNewton(fun, x, options)
               et    = (y'*y)/(y'*s);
             end
           end
-          
           dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
         else
           sPrev = zeros(length(x), 0);
@@ -155,7 +163,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
         if isa(Hf,'function_handle')
           dx = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
         elseif isa(Hf,'numeric')
-          dx = Hf\(-Df);
+          dx = -Hf\(Df);
         end
     end
     
@@ -167,24 +175,31 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     
     % Conduct line search for a step length that safisfies the Wolfe conditions
     if strcmp(method,'Newton')
-      [x, f, Df, Hf, step, ~, LSiter] = ...
+      [x, f, Df, Hf, step, lineSearchFlag, lineSearchIters] = ...
         cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
     elseif iter > 1 
-      [x, f, Df, step, ~, LSiter] = ...
+      [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
         cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
     else
-      [x, f, Df, step, ~, LSiter] = ...
+      [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
         cvsrch(fun, x, f, Df, dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
     end
     
     % ------------ Collect data for display and output ------------
     
-    funEvals   = funEvals + LSiter;   
+    funEvals   = funEvals + lineSearchIters;   
     opt = norm(Df,'inf');
     
     Trace.f(iter+1)          = f;
     Trace.funEvals(iter+1)   = funEvals;
     Trace.optimality(iter+1) = opt;
+    Trace.step(iter)         = step;
+    
+    if debug
+      Trace.dx(iter)              = norm(dx);
+      Trace.lineSearchFlag(iter)  = lineSearchFlag;
+      Trace.lineSearchIters(iter) = lineSearchIters;
+    end
     
     if display > 0 && mod(iter,display) == 0
       fprintf(' %4d | %6d  %12.4e  %12.4e  %12.4e\n',...
@@ -226,6 +241,12 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   Trace.f          = Trace.f(1:iter+1);
   Trace.funEvals   = Trace.funEvals(1:iter+1);
   Trace.optimality = Trace.optimality(1:iter+1);
+  
+  if debug
+    Trace.dx              = Trace.dx(1:iter);
+    Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
+    Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
+  end
   
   if display > 0 && mod(iter,display) > 0
     fprintf(' %4d | %6d  %12.4e  %12.4e  %12.4e\n',...

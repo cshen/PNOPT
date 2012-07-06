@@ -15,6 +15,7 @@ function options = SetPNoptOptions(varargin)
   if nargin == 0 && nargout == 0
     fprintf('  Default parameters for PNopt.m:\n');
     fprintf('          checkOpt : [          logical |          1 ] \n');
+    fprintf('             debug : [          logical |          0 ] \n');
     fprintf('           display : [ positive integer |         10 ] \n');
     fprintf('  LbfgsCorrections : [ positive integer |      20/50 ] \n');
     fprintf('          LSmemory : [ positive integer |         10 ] \n');
@@ -32,6 +33,7 @@ function options = SetPNoptOptions(varargin)
 
   Names = [
     'checkOpt         '
+    'debug            '
     'display          '
     'Hess             '
     'LbfgsCorrections '

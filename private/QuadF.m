@@ -2,7 +2,7 @@ function [f, Df] = QuadF(Hx, g, x, y)
 % QuadF : Quadratic function
 %
 %   $Revision: 0.1.2 $  $Date: 2012/06/24 $
-
+% 
   dx  = y-x;
   if isa(Hx,'function_handle')
     Hdx = Hx(dx);

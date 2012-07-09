@@ -17,7 +17,9 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
+    'curvatureCond'   , 0.99    ,... % Curvature condition parameter
     'debug'           , 0       ,... % debug mode 
+    'descCond'      , 0.0001  ,... % Armijo condition parameter
     'display'         , 10      ,... % display frequency (<= 0 for no display) 
     'LbfgsCorrections', 50      ,... % Number of L-BFGS corrections
     'maxfunEvals'     , 50000   ,... % Max number of function evaluations
@@ -48,7 +50,9 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     options = defaultOptions;
   end
   
+  curvatureCond    = options.curvatureCond;
   debug            = options.debug;
+  descCond         = options.descCond;
   display          = options.display;
   LbfgsCorrections = options.LbfgsCorrections;
   maxfunEvals      = options.maxfunEvals;
@@ -74,7 +78,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   if display > 0
     fprintf(' %s\n',repmat('=',1,56));
-    fprintf('          QuasiNewton  v.%s (%s)\n', REVISION, DATE);
+    fprintf('           QuasiNewton v.%s (%s)\n', REVISION, DATE);
     fprintf(' %s\n',repmat('=',1,56));
     fprintf(' %4s   %6s  %12s  %12s  %12s \n',...
       '','Fun.', 'Step len.', 'Obj. val.', 'optimality');
@@ -188,13 +192,16 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     % Conduct line search for a step length that safisfies the Wolfe conditions
     if strcmp(method,'Newton')
       [x, f, Df, Hf, step, lineSearchFlag, lineSearchIters] = ...
-        cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+        mtsrch(fun, x, f, Df, dx, 1, descCond, curvatureCond, max(TolX,1e-9),...
+          maxfunEvals - funEvals);
     elseif iter > 1 
       [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
-        cvsrch(fun, x, f, Df, dx, 1, max(TolX,1e-9), maxfunEvals - funEvals);
+        mtsrch(fun, x, f, Df, dx, 1, descCond, curvatureCond, max(TolX,1e-9),...
+          maxfunEvals - funEvals);
     else
       [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
-        cvsrch(fun, x, f, Df, dx, min(1,1/norm(Df,1)), max(TolX,1e-9), maxfunEvals - funEvals);
+        mtsrch(fun, x, f, Df, dx, min(1,1/norm(Df,1)), descCond, curvatureCond,...
+          max(TolX,1e-9), maxfunEvals - funEvals);
     end
     
     % ------------ Collect data for display and output ------------

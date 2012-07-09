@@ -1,5 +1,5 @@
-      function varargout = cvsrch(fun,x,f,g,s,stp,...
-                 xtol, maxfev)
+      function varargout = mtsrch(fun,x,f,g,s,stp,...
+                 ftol,gtol, xtol, maxfev)
 %     **********
 %
 % This is a modified implementation of the algorithm described in:
@@ -15,8 +15,6 @@
 %   Yuekai Sun       Mar. 2012
 % 
 %     **********
-      ftol = 0.0001;
-      gtol = 0.99;
       stpmin = xtol;
       stpmax = 10;
       
@@ -33,7 +31,6 @@
 %     Initialize local variables.
 %
       brackt = 0;
-      stage1 = 1;
       nfev = 0;
       finit = f;
       dgtest = ftol*dginit;
@@ -108,20 +105,13 @@
          if (info ~= 0) 
                   break
          end
-%
-%        In the first stage we seek a step for which the modified
-%        function has a nonpositive value and nonnegative derivative.
-%
-         if (stage1 && f <= ftest1 && dg >= min(ftol,gtol)*dginit) 
-                stage1 = 0;
-         end
 % 
 %           Call cstep to update the interval of uncertainty 
 %           and to compute the new step.
 %
-         [stx,fx,dgx,sty,fy,dgy,stp,f,dg,brackt,infoc] ...
-          = cstep(stx,fx,dgx,sty,fy,dgy,stp,f,dg, ...
-                  brackt,stmin,stmax); %#ok<NASGU,ASGLU>
+            [stx,fx,dgx,sty,fy,dgy,stp,f,dg,brackt,infoc] ...
+             = mtstep(stx,fx,dgx,sty,fy,dgy,stp,f,dg, ...
+                     brackt,stmin,stmax); %#ok<ASGLU,NASGU>
 % 
 %        Force a sufficient decrease in the size of the
 %        interval of uncertainty.

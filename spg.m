@@ -1,5 +1,5 @@
 function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
-% Spg : Spectral proximal gradient methods
+% spg : Spectral proximal gradient methods
 % 
 % [x, f, output] = Spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
 %   of the objective function in composite form. smoothF is a handle to a function
@@ -10,8 +10,8 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
 %   optimization options with those in options, a structure created using the 
 %   SetPNoptOptions function.
 % 
-  REVISION = '$Revision: 0.1.6$';
-  DATE     = '$Date: June 24, 2012$';
+  REVISION = '$Revision: 0.2.4$';
+  DATE     = '$Date: June 30, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
@@ -19,15 +19,16 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   
   % Set default options
   defaultOptions = SetPNoptOptions(...
-    'checkOpt'    , 1     ,... % Check optimality (requires prox evaluation)
-    'debug'       , 0     ,... % debug mode 
-    'display'     , 1     ,... % display frequency (<= 0 for no display) 
-    'LSmemory'    , 10    ,... % Number of previous function values to save
-    'maxfunEvals' , 50000 ,... % Max number of function evaluations
-    'maxIter'     , 5000  ,... % Max number of iterations
-    'TolFun'      , 1e-9  ,... % Stopping tolerance on objective function 
-    'TolOpt'      , 1e-6  ,... % Stopping tolerance on optimality
-    'TolX'        , 1e-9   ... % Stopping tolerance on solution
+    'checkOpt'        , 1      ,... % Check optimality (requires prox evaluation)
+    'debug'           , 0      ,... % debug mode 
+    'descCond'        , 0.0001 ,... % Armijo condition parameter
+    'display'         , 1      ,... % display frequency (<= 0 for no display) 
+    'lineSearchmemory', 10     ,... % Number of previous function values to save
+    'maxfunEvals'     , 50000  ,... % Max number of function evaluations
+    'maxIter'         , 5000   ,... % Max number of iterations
+    'TolFun'          , 1e-9   ,... % Stopping tolerance on objective function 
+    'TolOpt'          , 1e-6   ,... % Stopping tolerance on optimality
+    'TolX'            , 1e-9    ... % Stopping tolerance on solution
     );
   
   % Set stopping flags and messages
@@ -45,20 +46,21 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   
   % Replace default option values with values in user-supplied options struct
   if nargin > 3
-    options = SetSpgOptions(defaultOptions, options);
+    options = SetPNoptOptions(defaultOptions, options);
   else
     options = defaultOptions;
   end
   
-  checkOpt    = options.checkOpt;
+  checkOpt         = options.checkOpt;
   debug            = options.debug;
-  display     = options.display;
-  LSmemory    = options.LSmemory;
-  maxfunEvals = options.maxfunEvals;
-  maxIter     = options.maxIter;
-  TolFun      = options.TolFun;
-  TolOpt      = options.TolOpt;
-  TolX        = options.TolX;
+  descCond         = options.descCond;
+  display          = options.display;
+  lineSearchMemory = options.lineSearchMemory;
+  maxfunEvals      = options.maxfunEvals;
+  maxIter          = options.maxIter;
+  TolFun           = options.TolFun;
+  TolOpt           = options.TolOpt;
+  TolX             = options.TolX;
   
   iter            = 0; 
   loop            = 1; 
@@ -78,14 +80,14 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   if display > 0    
     if checkOpt
       fprintf(' %s\n',repmat('=',1,64));
-      fprintf('            SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf('                   SPG v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,64));
       fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
         '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'optimality');
       fprintf(' %s\n',repmat('-',1,64));
     else
       fprintf(' %s\n',repmat('=',1,50));
-      fprintf('     SPG  v.%s (%s)\n', REVISION, DATE);
+      fprintf('            SPG v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,50));
       fprintf(' %4s   %6s  %6s  %12s  %12s \n',...
         '','Fun.', 'Prox', 'Step len.', 'Obj. val.');
@@ -154,7 +156,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     
     % ------------ Conduct line search ------------
     xPrev   = x;
-    if iter+1 > LSmemory
+    if iter+1 > lineSearchMemory
       fPrev = [fPrev(2:end), f];
     else
       fPrev(iter) = f;
@@ -164,7 +166,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     % Conduct line search for a step length that safisfies the Armijo condition
     [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
       CurvySearch(x, -Df, BbStepLen, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
-      TolX, maxfunEvals - funEvals); 
+        descCond, TolX, maxfunEvals - funEvals); 
     
     % ------------ Collect data and display status ------------
     

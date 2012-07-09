@@ -15,29 +15,33 @@ function options = SetPNoptOptions(varargin)
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNopt.m:\n');
     fprintf('        checkOpt : [          logical |         1 ] \n');
+    fprintf('   curvatureCond : [  positive scalar |      0.99 ] \n');    
     fprintf('           debug : [          logical |         0 ] \n');
+    fprintf('        descCond : [  positive scalar |    0.0001 ] \n');
     fprintf('         display : [ positive integer |        10 ] \n');
     fprintf('LbfgsCorrections : [ positive integer |     20/50 ] \n');
-    fprintf('        LSmemory : [ positive integer |        10 ] \n');
+    fprintf('lineSearchMemory : [ positive integer |        10 ] \n');
     fprintf('     maxfunEvals : [ positive integer |      5000 ] \n');
     fprintf('         maxIter : [ positive integer |       500 ] \n');
-    fprintf('          method : [ string           |     Lbfgs ] \n');
-    fprintf('subproblemMethod : [ string           |     Tfocs ] \n');
-    fprintf('       TfocsOpts : [ struct           | TfocsOpts ] \n');
-    fprintf('          TolFun : [ positive scalar  |      1e-9 ] \n');
-    fprintf('          TolOpt : [ positive scalar  |      1e-6 ] \n');
-    fprintf('            TolX : [ positive scalar  |      1e-9 ] \n');
+    fprintf('          method : [           string |     Lbfgs ] \n');
+    fprintf('subproblemMethod : [           string |     Tfocs ] \n');
+    fprintf('       TfocsOpts : [           struct | TfocsOpts ] \n');
+    fprintf('          TolFun : [  positive scalar |      1e-9 ] \n');
+    fprintf('          TolOpt : [  positive scalar |      1e-6 ] \n');
+    fprintf('            TolX : [  positive scalar |      1e-9 ] \n');
     fprintf('\n');
     return;
   end
 
   Names = [
     'checkOpt         '
+    'curvatureCond    '
     'debug            '
+    'descCond         '
     'display          '
     'Hess             '
     'LbfgsCorrections '
-    'LSmemory         '
+    'lineSearchMemory '
     'maxfunEvals      '
     'maxIter          '
     'method           '

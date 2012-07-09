@@ -45,6 +45,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   defaultOptions = SetPNoptOptions(...
     'checkOpt'         , 1          ,... % Check optimality (requires prox evaluation)
     'debug'            , 0          ,... % debug mode 
+    'descCond'         , 0.0001     ,... % Armijo condition parameter
     'display'          , 10         ,... % display frequency (<= 0 for no display) 
     'LbfgsCorrections' , 20         ,... % Number of L-BFGS corrections
     'maxfunEvals'      , 5000       ,... % Max number of function evaluations
@@ -80,6 +81,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
   checkOpt         = options.checkOpt;
   debug            = options.debug;
+  descCond         = options.descCond;
   display          = options.display;
   LbfgsCorrections = options.LbfgsCorrections;
   maxfunEvals      = options.maxfunEvals;
@@ -118,14 +120,14 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   if display > 0  
     if checkOpt
       fprintf(' %s\n',repmat('=',1,64));
-      fprintf('                ProxNewton v.%s (%s)\n', REVISION, DATE);
+      fprintf('               ProxNewton  v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,64));
       fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
         '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'optimality');
       fprintf(' %s\n',repmat('-',1,64));
     else
       fprintf(' %s\n',repmat('=',1,50));
-      fprintf('         ProxNewton v.%s (%s)\n', REVISION, DATE);
+      fprintf('        ProxNewton  v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,50));
       fprintf(' %4s   %6s  %6s  %12s  %12s \n',...
         '','Fun.', 'Prox', 'Step len.', 'Obj. val.');
@@ -312,15 +314,15 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     if strcmp(method,'Newton')
       [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
         LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals); 
+          descCond, TolX, maxfunEvals - funEvals); 
     elseif iter > 1 
       [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
         LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals); 
+          descCond, TolX, maxfunEvals - funEvals); 
     else
       [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
         CurvySearch(x, dx, min(1,1/norm(Df,1)), f, Df'*dx, smoothF, nonsmoothF,...
-        TolX, maxfunEvals - funEvals);           
+          descCond, TolX, maxfunEvals - funEvals);           
     end 
     
     % ------------ Collect data for display and output ------------

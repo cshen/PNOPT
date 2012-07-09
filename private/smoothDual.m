@@ -7,14 +7,9 @@ function [M, Dh] = smoothDual(d, Q, x, nonsmoothF, v)
   if isa(Q, 'function_handle')
     Dh   = -w + Q(v) + x;
   elseif isnumeric(Q)
-    if nnz(tril(Q,-1)) == 0
-      R  = Q;
-      Dh = -w + R\(R'\v) + x;
-    else
-      error('smoothDual:badMat', 'Second argument must be a Cholesky factor if a numeric array.')
-    end
+    Dh = -w + Q\v + x;
   else
-    error('smoothDual:badMat', 'Second argument must be a function handle or Cholesky factor.')
+    error('smoothDual:badHess', 'Hessian must be a function handle or Cholesky factor.')
   end
   M      = 0.5*norm(Dh)^2;
   

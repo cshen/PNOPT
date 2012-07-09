@@ -10,7 +10,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 %   default optimization options with those in options, a structure created 
 %   using the SetPNoptOptions function.
 % 
-  REVISION = '$Revision: 0.2.1$';
+  REVISION = '$Revision: 0.2.4$';
   DATE     = '$Date: June 30, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
@@ -187,23 +187,20 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     
     switch method
       % BFGS method
-      case 'bfgs'
+      case 'Bfgs'
         if iter > 1
           s =  x - xPrev;
           y = Df - DfPrev;
           qty1 = R'*(R*s);
-          
           if s'*y > 1e-9
             R = cholupdate(cholupdate(R, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
           end
-          
           Hf = @(x) R'*(R*x);
           
           if strcmp(subproblemMethod,'smoothDual')
-            B  = @(x) R\(R'\x);
-            Dx = -R\(R'\Df);
+            Bf = @(x) R\(R'\x);
+            dx = -R\(R'\Df);
           end
-          
         else
           R  = eye(length(x));
           dx = -Df;
@@ -226,9 +223,10 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
             end
           end
           Hf   = LbfgsProd(sPrev, yPrev, et);
+          
           if strcmp(subproblemMethod,'smoothDual')
-            B  = @(x) LbfgsSearchDir(sPrev, yPrev, et, -x);
-            Dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
+            Bf = @(x) LbfgsSearchDir(sPrev, yPrev, et, -x);
+            dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
           end
         else
           sPrev = zeros(length(x), 0);
@@ -240,8 +238,21 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
       % Newton's method
       case 'Newton'        
         if strcmp(subproblemMethod,'smoothDual')
-          B  = @(x) Hf\x;
-          Dx = -Hf\Df;
+          if isnumeric(Hf)
+            if issparse(Hf)
+              condHf = condest(Hf);
+            else
+              condHf = cond(Hf);
+            end
+            
+            if condHf < 1e9
+              dx = -Hf\Df;
+            else
+              dx = -(Hf + 1e-9*eye(r))\Df;
+            end
+          else
+            error('ProxNewton:BadHess','Hessian must be a numeric array.')
+          end
         end
     end
     
@@ -267,7 +278,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
           d = 1;
           
           [v, Mv, QNoutput] = ...
-            QuasiNewton(@(v) smoothDual(d, B, x+Dx, nonsmoothF, v), x+Dx, QNoptions); %#ok<ASGLU>
+            QuasiNewton(@(v) smoothDual(d, Bf, x+dx, nonsmoothF, v), x+Dx, QNoptions); %#ok<ASGLU>
           [~, z] = nonsmoothF(x+Dx-v/d,1/d);
           
           proxEvals = proxEvals + QNoutput.funEvals;
@@ -296,8 +307,6 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     xPrev  = x;
     fPrev  = f;
     DfPrev = Df;
-    
-    
     
     % Conduct line search for a step length that safisfies the Armijo condition
     if strcmp(method,'Newton')

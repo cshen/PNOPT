@@ -8,7 +8,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
 % [x, f, output] = QuasiNewton(fun, x, options) replaces the default options 
 %   with those in options, a struct created using the SetPNoptOptions function.
 % 
-  REVISION = '$Revision: 0.2.1$';
+  REVISION = '$Revision: 0.2.4$';
   DATE     = '$Date: June 30, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
@@ -67,6 +67,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   if debug
     Trace.dx              = zeros(maxIter,1);
+    Trace.gtd             = zeros(maxIter,1);
     Trace.lineSearchFlag  = zeros(maxIter,1);
     Trace.lineSearchIters = zeros(maxIter,1);
   end
@@ -119,7 +120,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     
     switch method
       % BFGS method
-      case 'bfgs'
+      case 'Bfgs'
         if iter > 1
           s =  x - xPrev;
           y = Df - DfPrev;
@@ -162,8 +163,19 @@ function [x, f, output] = QuasiNewton(fun, x, options)
         % If Hf is a function handle, use pcg to solve Newton system inexactly.
         if isa(Hf,'function_handle')
           dx = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
-        elseif isa(Hf,'numeric')
-          dx = -Hf\(Df);
+          
+        elseif isnumeric(Hf)
+          if issparse(Hf)
+            condHf = condest(Hf);
+          else
+            condHf = cond(Hf);
+          end
+          
+          if condHf < 1e9
+            dx = -Hf\Df;
+          else
+            dx = -(Hf + 1e-9*eye(r))\Df;
+          end
         end
     end
     
@@ -197,6 +209,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     
     if debug
       Trace.dx(iter)              = norm(dx);
+      Trace.gtd(iter)             = Df'*dx;
       Trace.lineSearchFlag(iter)  = lineSearchFlag;
       Trace.lineSearchIters(iter) = lineSearchIters;
     end
@@ -244,6 +257,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   if debug
     Trace.dx              = Trace.dx(1:iter);
+    Trace.gtd             = Trace.gtd(1:iter);
     Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
     Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
   end

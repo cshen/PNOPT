@@ -9,24 +9,24 @@ function options = SetPNoptOptions(varargin)
 %   parameter names and their possible values.
 %
 %   SetPNoptOptions.m
-%   $Revision: 0.2.0 $  $Date: 2012/06/24 $
+%   $Revision: 0.2.4 $  $Date: 2012/06/30 $
 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
-    fprintf('  Default parameters for PNopt.m:\n');
-    fprintf('          checkOpt : [          logical |          1 ] \n');
-    fprintf('             debug : [          logical |          0 ] \n');
-    fprintf('           display : [ positive integer |         10 ] \n');
-    fprintf('  LbfgsCorrections : [ positive integer |      20/50 ] \n');
-    fprintf('          LSmemory : [ positive integer |         10 ] \n');
-    fprintf('       maxfunEvals : [ positive integer |       5000 ] \n');
-    fprintf('           maxIter : [ positive integer |        500 ] \n');
-    fprintf('            method : [ string           |      Lbfgs ] \n');
-    fprintf('  subproblemMethod : [ string           |      Tfocs ] \n');
-    fprintf('         TfocsOpts : [ struct           |  TfocsOpts ] \n');
-    fprintf('            TolFun : [ positive scalar  |       1e-9 ] \n');
-    fprintf('            TolOpt : [ positive scalar  |       1e-6 ] \n');
-    fprintf('              TolX : [ positive scalar  |       1e-9 ] \n');
+    fprintf('Default parameters for PNopt.m:\n');
+    fprintf('        checkOpt : [          logical |         1 ] \n');
+    fprintf('           debug : [          logical |         0 ] \n');
+    fprintf('         display : [ positive integer |        10 ] \n');
+    fprintf('LbfgsCorrections : [ positive integer |     20/50 ] \n');
+    fprintf('        LSmemory : [ positive integer |        10 ] \n');
+    fprintf('     maxfunEvals : [ positive integer |      5000 ] \n');
+    fprintf('         maxIter : [ positive integer |       500 ] \n');
+    fprintf('          method : [ string           |     Lbfgs ] \n');
+    fprintf('subproblemMethod : [ string           |     Tfocs ] \n');
+    fprintf('       TfocsOpts : [ struct           | TfocsOpts ] \n');
+    fprintf('          TolFun : [ positive scalar  |      1e-9 ] \n');
+    fprintf('          TolOpt : [ positive scalar  |      1e-6 ] \n');
+    fprintf('            TolX : [ positive scalar  |      1e-9 ] \n');
     fprintf('\n');
     return;
   end

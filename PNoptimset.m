@@ -1,57 +1,55 @@
-function options = SetPNoptOptions(varargin)
-% SetProxNewtonOptions : Set options for PNopt
+function options = PNoptimset(varargin)
+% PNoptimset : Set options for PNopt
 %
-% options = SetPNoptOptions('param1',val1,'param2',val2,...) creates an options
+% options = PNoptimset('param1',val1,'param2',val2,...) creates an options
 %   structure in which the named parameters have the specified values. Default
 %   values are used for parameters that are not specified.
 %   
-% SetPNoptOptions with no input arguments and no output arguments displays all 
+% PNoptimset with no input arguments and no output arguments displays all 
 %   parameter names and their possible values.
 %
-%   SetPNoptOptions.m
-%   $Revision: 0.2.4 $  $Date: 2012/06/30 $
-
+%   PNoptimset.m
+%   $Revision: 0.4.2 $  $Date: 2012/07/15 $
+% 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNopt.m:\n');
-    fprintf('        checkOpt : [          logical |         1 ] \n');
-    fprintf('   curvatureCond : [  positive scalar |      0.99 ] \n');    
-    fprintf('           debug : [          logical |         0 ] \n');
-    fprintf('        descCond : [  positive scalar |    0.0001 ] \n');
-    fprintf('         display : [ positive integer |        10 ] \n');
-    fprintf('LbfgsCorrections : [ positive integer |     20/50 ] \n');
-    fprintf('lineSearchMemory : [ positive integer |        10 ] \n');
-    fprintf('     maxfunEvals : [ positive integer |      5000 ] \n');
-    fprintf('         maxIter : [ positive integer |       500 ] \n');
-    fprintf('          method : [           string |     Lbfgs ] \n');
-    fprintf('subproblemMethod : [           string |     Tfocs ] \n');
-    fprintf('       TfocsOpts : [           struct | TfocsOpts ] \n');
-    fprintf('          TolFun : [  positive scalar |      1e-9 ] \n');
-    fprintf('          TolOpt : [  positive scalar |      1e-6 ] \n');
-    fprintf('            TolX : [  positive scalar |      1e-9 ] \n');
+    fprintf('     checkOpt : [          logical |         1 ] \n');
+    fprintf('    curvParam : [  positive scalar |       0.9 ] \n');    
+    fprintf('        debug : [          logical |         0 ] \n');
+    fprintf('    descParam : [  positive scalar |    0.0001 ] \n');
+    fprintf('      display : [ positive integer |        10 ] \n');
+    fprintf('   LbfgsCorrs : [ positive integer |        50 ] \n');
+    fprintf('lineSearchMem : [ positive integer |        10 ] \n');
+    fprintf('  maxfunEvals : [ positive integer |      5000 ] \n');
+    fprintf('      maxIter : [ positive integer |       500 ] \n');
+    fprintf('       method : [           string |     Lbfgs ] \n');
+    fprintf('    subMethod : [           string |     Tfocs ] \n');
+    fprintf('       funTol : [  positive scalar |      1e-9 ] \n');
+    fprintf('       optTol : [  positive scalar |      1e-6 ] \n');
+    fprintf('         xTol : [  positive scalar |      1e-9 ] \n');
     fprintf('\n');
     return;
   end
 
   Names = [
-    'checkOpt         '
-    'curvatureCond    '
-    'debug            '
-    'descCond         '
-    'display          '
-    'Hess             '
-    'LbfgsCorrections '
-    'lineSearchMemory '
-    'maxfunEvals      '
-    'maxIter          '
-    'method           '
-    'spgOptions       '
-    'subproblemMethod '
-    'TfocsOpts        '
-    'TolFun           '
-    'TolOpt           '
-    'TolX             '
-    'useMex           '
+    'checkOpt      '
+    'curvParam     '
+    'debug         '
+    'descParam     '
+    'display       '
+    'LbfgsCorrs    '
+    'lineSearchMem '
+    'maxfunEvals   '
+    'maxIter       '
+    'method        '
+    'SparsaOptions '
+    'subMethod     '
+    'TfocsOpts     '
+    'funTol        '
+    'optTol        '
+    'xTol          '
+    'useMex        '
     ];
   
   [m,n] = size(Names); %#ok<NASGU>
@@ -84,7 +82,7 @@ function options = SetPNoptOptions(varargin)
     end
     i = i + 1;
   end
-
+  
   % A finite state machine to parse name-value pairs.
   if rem(nargin-i+1,2) ~= 0
     error('Arguments must occur in name-value pairs.');
@@ -122,7 +120,7 @@ function options = SetPNoptOptions(varargin)
     else
       eval(['options.' Names(j,:) '= arg;']);
       expectval = 0;
-
+      
     end
     i = i + 1;
   end
@@ -130,4 +128,4 @@ function options = SetPNoptOptions(varargin)
   if expectval
     error(sprintf('Expected value for parameter ''%s''.', arg));
   end
-end
+

@@ -1,143 +1,137 @@
 function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 % ProxNewton : Proximal Newton-type methods
 % 
-% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x) starts at x and seeks a
-%   minimizer of the objective function in composite form. smoothF is a handle 
+% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x) starts at x and seeks a 
+%   minimizer of the objective function in composite form. smoothF is a handle
 %   to a function that returns the smooth function value and gradient. nonsmoothF
-%   is a handle to a function that returns the nonsmooth value and prox.
+%   is a handle to a function that returns the nonsmooth function value and 
+%   proximal mapping. 
 % 
 % [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options) replaces the   
 %   default optimization options with those in options, a structure created 
-%   using the SetPNoptOptions function.
+%   using the PNoptimset function.
 % 
-  REVISION = '$Revision: 0.2.4$';
-  DATE     = '$Date: June 30, 2012$';
+  REVISION = '$Revision: 0.4.2$';
+  DATE     = '$Date: July 15, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
-% ============ Initialize ============
+% ============ Process options ============
   
-  % Set default options for subproblem solver
-  spgOptions = SetPNoptOptions(...
-    'checkOpt'   , 1    ,... 
-    'display'    , 0    ,...
-    'maxfunEvals', 500  ,...
-    'maxIter'    , 50   ,...
-    'TolOpt'     , 1e-3  ...
+  PNoptions = PNoptimset(...
+    'debug'       , 0       ,... % debug mode 
+    'descParam'   , 0.0001  ,... % Sufficient descent parameter
+    'display'     , 10      ,... % display frequency (<= 0 for no display) 
+    'LbfgsCorrs'  , 50      ,... % Number of L-BFGS corrections
+    'maxfunEvals' , 5000    ,... % Max number of function evaluations
+    'maxIter'     , 500     ,... % Max number of iterations
+    'method'      , 'Lbfgs' ,... % method for choosing search directions
+    'subMethod'   , 'Tfocs' ,... % Solver for solving subproblems
+    'funTol'      , 1e-9    ,... % Stopping tolerance on relative change in the objective function 
+    'optTol'      , 1e-6    ,... % Stopping tolerance on optimality condition
+    'xTol'        , 1e-9     ... % Stopping tolerance on solution
+    );
+  
+  SparsaOptions = PNoptimset(...
+    'display'     , 0    ,...
+    'maxfunEvals' , 5000 ,...
+    'maxIter'     , 500   ...
     );
   
   TfocsOpts = struct(...
-    'alg'       , 'N83' ,...
-    'maxIts'    , 100    ,...
-    'printEvery', 0     ,...
-    'restart'   , -Inf  ,...
-    'tol'       , 1e-3   ...
+    'alg'        , 'N83' ,...
+    'maxIts'     , 500   ,...
+    'printEvery' , 0     ,...
+    'restart'    , -Inf   ...
     );
   
-  QNoptions = SetPNoptOptions(...
-    'display'    , 1    ,...
-    'maxfunEvals', 5000 ,...
-    'maxIter'    , 500 ,...
-    'TolFun'     , 0    ...
-    );
+  if nargin > 3
+    options = PNoptimset(PNoptions, options);
+  else
+    options = PNoptions;
+  end
   
-  % Set default options
-  defaultOptions = SetPNoptOptions(...
-    'checkOpt'         , 1          ,... % Check optimality (requires prox evaluation)
-    'debug'            , 0          ,... % debug mode 
-    'descCond'         , 0.0001     ,... % Armijo condition parameter
-    'display'          , 10         ,... % display frequency (<= 0 for no display) 
-    'LbfgsCorrections' , 20         ,... % Number of L-BFGS corrections
-    'maxfunEvals'      , 5000       ,... % Max number of function evaluations
-    'maxIter'          , 500        ,... % Max number of iterations
-    'method'           , 'Lbfgs'    ,... % method for choosing search directions
-    'spgOptions'       , spgOptions ,... % Options for solving subproblems using spg
-    'subproblemMethod' , 'Tfocs'    ,... % Solver for solving subproblems
-    'TfocsOpts'        , TfocsOpts  ,... % Options for solving subproblems using TFOCS
-    'TolFun'           , 1e-9       ,... % Stopping tolerance on relative change in the objective function 
-    'TolOpt'           , 1e-6       ,... % Stopping tolerance on optimality
-    'TolX'             , 1e-9        ... % Stopping tolerance on solution
-    );
+  debug        = options.debug;
+  descParam    = options.descParam;
+  display      = options.display;
+  LbfgsCorrs   = options.LbfgsCorrs;
+  maxfunEvals  = options.maxfunEvals;
+  maxIter      = options.maxIter;
+  method       = options.method;
+  switch method
+    case 'Bfgs'
+      evalHess = 0;
+    case 'Lbfgs'
+      evalHess = 0;
+    case 'Newton'
+      evalHess = 1;
+  end
+  subMethod    = options.subMethod;
+  funTol       = options.funTol;
+  optTol       = options.optTol;
+  xTol         = options.xTol;
   
-  % Set stopping flags and messages
-  FLAG_OPTIMAL     = 1;
+  switch subMethod
+    case 'Sparsa'
+      if isfield(options, 'SparsaOptions') && ~isempty(options.SparsaOptions)
+        SparsaOptions = PNoptimset(SparsaOptions, options.SparsaOptions);
+      end
+    case 'Tfocs'
+      if isfield(options, 'TfocsOpts') && ~isempty(options.TfocsOpts)
+        TfocsOpts = mergestruct(TfocsOpts, options.TfocsOpts);
+      end
+           
+      if debug
+        TfocsOpts.countOps = 1;
+        TfocsOpts.errFcn   = @(f,x) tfocs_err();
+      end
+  end
+  
+  % ============ Initialize variables ============
+  
+  FLAG_OPT         = 1;
   FLAG_TOLX        = 2;
   FLAG_TOLFUN      = 3;
   FLAG_MAXITER     = 4;
   FLAG_MAXFUNEVALS = 5;
+  FLAG_OTHER       = 6;
   
-  MESSAGE_OPTIMAL     = 'Optimality below TolOpt.';
-  MESSAGE_TOLX        = 'Relative change in x below TolX.';
-  MESSAGE_TOLFUN      = 'Relative change in function value below TolFun.';
-  MESSAGE_MAXITER     = 'Max number of iterations reached.';
-  MESSAGE_MAXFUNEVALS = 'Max number of function evaluations reached.';
+  MSG_OPT         = 'Optimality below optTol.';
+  MSG_TOLX        = 'Relative change in x below xTol.';
+  MSG_TOLFUN      = 'Relative change in function value below funTol.';
+  MSG_MAXITER     = 'Max number of iterations reached.';
+  MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
   
-  % Replace default option values with values in user-supplied options struct
-  if nargin > 3
-    options = SetPNoptOptions(defaultOptions, options);
-  else
-    options = defaultOptions;
-  end
+  iter        = 0; 
+  loop        = 1;
+  forcingTerm = 0.5;
   
-  checkOpt         = options.checkOpt;
-  debug            = options.debug;
-  descCond         = options.descCond;
-  display          = options.display;
-  LbfgsCorrections = options.LbfgsCorrections;
-  maxfunEvals      = options.maxfunEvals;
-  maxIter          = options.maxIter;
-  method           = options.method;
-  subproblemMethod = options.subproblemMethod;
-  TolFun           = options.TolFun;
-  TolOpt           = options.TolOpt;
-  TolX             = options.TolX;
-  
-  switch subproblemMethod
-    case 'spg'
-      spgOptions = options.BbOptions;
-      TolSub     = spgOptions.TolOpt;
-    case 'Tfocs'
-      TfocsOpts = options.TfocsOpts;
-      TolSub    = TfocsOpts.tol;
-  end
-  
-  iter            = 0; 
-  loop            = 1;
   Trace.f         = zeros(maxIter+1,1);
   Trace.funEvals  = zeros(maxIter+1,1);
   Trace.proxEvals = zeros(maxIter+1,1);
-  if checkOpt
-    Trace.optimality = zeros(maxIter+1,1);
-  end
+  Trace.opt       = zeros(maxIter+1,1);
   
   if debug
-    Trace.dx              = zeros(maxIter,1);
+    Trace.normSearchDir   = zeros(maxIter,1);
     Trace.lineSearchFlag  = zeros(maxIter,1);
     Trace.lineSearchIters = zeros(maxIter,1);
-    Trace.TolSub          = zeros(maxIter,1);
+    Trace.subFlags = zeros(maxIter,1);
+    Trace.subIters = zeros(maxIter,1);
+    Trace.subopt   = zeros(maxIter,1);
   end
   
   if display > 0  
-    if checkOpt
-      fprintf(' %s\n',repmat('=',1,64));
-      fprintf('               ProxNewton  v.%s (%s)\n', REVISION, DATE);
-      fprintf(' %s\n',repmat('=',1,64));
-      fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
-        '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'optimality');
-      fprintf(' %s\n',repmat('-',1,64));
-    else
-      fprintf(' %s\n',repmat('=',1,50));
-      fprintf('        ProxNewton  v.%s (%s)\n', REVISION, DATE);
-      fprintf(' %s\n',repmat('=',1,50));
-      fprintf(' %4s   %6s  %6s  %12s  %12s \n',...
-        '','Fun.', 'Prox', 'Step len.', 'Obj. val.');
-      fprintf(' %s\n',repmat('-',1,50));
-    end
+    fprintf(' %s\n',repmat('=',1,64));
+    fprintf('               ProxNewton  v.%s (%s)\n', REVISION, DATE);
+    fprintf(' %s\n',repmat('=',1,64));
+    fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
+      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality');
+    fprintf(' %s\n',repmat('-',1,64));
   end
   
   % ============ Evaluate objective function at starting x ============ 
   
-  if strcmp(method,'Newton')
+  if evalHess
     [f, Df, Hf] = smoothF(x);
   else
     [f, Df] = smoothF(x);
@@ -149,34 +143,24 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
   funEvals  = 1;
   proxEvals = 0;
-  if checkOpt
-    [h1, x1]  = nonsmoothF(x-Df,1); %#ok<ASGLU>
-    proxEvals = proxEvals + 1;
-    opt       = norm(x1-x,'inf'); 
-  end
+  [~, xProx ] = nonsmoothF( x - Df ,1);
+       opt    = norm( xProx - x ,'inf');
   
   Trace.f(1)         = f;
   Trace.funEvals(1)  = funEvals;
   Trace.proxEvals(1) = proxEvals;
-  if checkOpt
-    Trace.optimality(1) = opt; 
-  end
+  Trace.opt(1)       = opt; 
   
   if display > 0
-    if checkOpt
-      fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
-        iter, funEvals, proxEvals, '', f, opt);
-    else
-      fprintf(' %4d | %6d  %6d  %12s  %12.4e \n',...
-        iter, funEvals, proxEvals, '', f);
-    end
+    fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
+      iter, funEvals, proxEvals, '', f, opt);
   end
   
   % ============ Check if starting x is optimal ============ 
   
-  if checkOpt && opt <= TolOpt
-    flag    = FLAG_OPTIMAL;
-    message = MESSAGE_OPTIMAL;
+  if opt <= optTol
+    flag    = FLAG_OPT;
+    message = MSG_OPT;
     loop    = 0;
   end
 
@@ -185,9 +169,10 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   while loop
     iter = iter+1; 
     
-    % ------------ Compute search direction ------------
+    % ------------ Update Hessian approximation ------------
     
     switch method
+      
       % BFGS method
       case 'Bfgs'
         if iter > 1
@@ -198,14 +183,8 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
             R = cholupdate(cholupdate(R, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
           end
           Hf = @(x) R'*(R*x);
-          
-          if strcmp(subproblemMethod,'smoothDual')
-            Bf = @(x) R\(R'\x);
-            dx = -R\(R'\Df);
-          end
         else
           R  = eye(length(x));
-          dx = -Df;
         end
 
       % Limited-memory BFGS method
@@ -214,177 +193,172 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
           s =  x - xPrev;
           y = Df - DfPrev;
           if y'*s > 1e-9
-            if size(sPrev,2) > LbfgsCorrections
-              sPrev = [sPrev(:,2:LbfgsCorrections), s];
-              yPrev = [yPrev(:,2:LbfgsCorrections), y];
-              et    = (y'*y)/(y'*s);
+            if size(sPrev,2) > LbfgsCorrs
+              sPrev = [sPrev(:,2:LbfgsCorrs), s];
+              yPrev = [yPrev(:,2:LbfgsCorrs), y];
+              de    = (y'*y)/(y'*s);
             else
               sPrev = [sPrev, s]; %#ok<AGROW>
               yPrev = [yPrev, y]; %#ok<AGROW>
-              et    = (y'*y)/(y'*s);
+              de    = (y'*y)/(y'*s);
             end
           end
-          Hf   = LbfgsProd(sPrev, yPrev, et);
-          
-          if strcmp(subproblemMethod,'smoothDual')
-            Bf = @(x) LbfgsSearchDir(sPrev, yPrev, et, -x);
-            dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
-          end
+          Hf = LbfgsProd(sPrev, yPrev, de);
         else
           sPrev = zeros(length(x), 0);
           yPrev = zeros(length(x), 0);
-          et    = 1;
-          dx    = -Df;
-        end
-      
-      % Newton's method
-      case 'Newton'        
-        if strcmp(subproblemMethod,'smoothDual')
-          if isnumeric(Hf)
-            if issparse(Hf)
-              condHf = condest(Hf);
-            else
-              condHf = cond(Hf);
-            end
-            
-            if condHf < 1e9
-              dx = -Hf\Df;
-            else
-              dx = -(Hf + 1e-9*eye(r))\Df;
-            end
-          else
-            error('ProxNewton:BadHess','Hessian must be a numeric array.')
-          end
         end
     end
     
-    % Solve subproblem to obtain search direction
-    if iter > 1 || strcmp(method,'Newton')
-      switch subproblemMethod
-        case 'spg'
-          spgOptions = SetPNoptOptions(spgOptions,...
-            'TolOpt', TolSub ...
-            );
+    % ------------ Solve subproblem for a search direction ------------
+    
+    if iter > 1 || evalHess
+      quadF = @(z) smooth_quad(Hf, Df, x ,z);
+      
+      switch subMethod
+        
+        % Yuekai's implementation of SpaRSA
+        case 'Sparsa'
+          SparsaOptions = PNoptimset(SparsaOptions ,...
+            'optTol', max( optTol, forcingTerm*opt ) ...
+            );  
           
-          [z, fz, spgOutput] = ...
-            spg(@(z) QuadF(Hf, Df, x ,z), nonsmoothF, x, spgOptions); %#ok<ASGLU>
+          [xProx, ~, spgOutput] = ...
+            spg(quadF, nonsmoothF, x, SparsaOptions); 
+
+          % ------------ Collect data from subproblem solve ------------
           
-          proxEvals = proxEvals + spgOutput.proxEvals;
+          subIters     = spgOutput.iters;
+          subProxEvals = spgOutput.proxEvals;
           
-          % If SPG stops early, then make stopping tolerance smaller.     
-          if spgOutput.iterations < spgOptions.maxIter  
-            TolSub  = max(0.5*TolSub, TolOpt);     
+          if debug
+            subFlag = spgOutput.flag;
+            subopt  = spgOutput.opt;
           end
-          
-        case 'smoothDual' % doesn't fucking work
-          d = 1;
-          
-          [v, Mv, QNoutput] = ...
-            QuasiNewton(@(v) smoothDual(d, Bf, x+dx, nonsmoothF, v), x+Dx, QNoptions); %#ok<ASGLU>
-          [~, z] = nonsmoothF(x+Dx-v/d,1/d);
-          
-          proxEvals = proxEvals + QNoutput.funEvals;
-          
+        
+        % TFOCS 
         case 'Tfocs'
-          TfocsOpts.tol = TolSub;
+          TfocsOpts.stopFcn = @(f,x) tfocs_stop( x, nonsmoothF,...
+            max( optTol, forcingTerm*opt ) );
+
+          [xProx, TfocsOut] = ...
+            tfocs(quadF, [], nonsmoothF, x, TfocsOpts);
           
-          [z, TfocsOut] = ...
-            tfocs(@(z) QuadF(Hf, Df, x ,z), [], nonsmoothF, x, TfocsOpts);
-          
-          if isfield(TfocsOpts, 'countOpts') && TfocsOpts.countOpts
-            proxEvals = proxEvals + TfocsOut.counts(end,6);
+          subIters       = TfocsOut.niter;
+          if isfield(TfocsOpts, 'countOps') && TfocsOpts.countOps
+            subProxEvals = TfocsOut.counts(end,5);
           else
-            proxEvals = proxEvals + TfocsOut.niter;
+            subProxEvals = TfocsOut.niter;
           end
           
-          if TfocsOut.niter < TfocsOpts.maxIts  
-            TolSub = max(0.5*TolSub, TolX);
+          if debug
+            switch TfocsOut.status
+              case 'Reached user''s supplied stopping criteria no. 1'
+                subFlag = FLAG_OPT;
+              case {'Step size tolerance reached (||dx||=0)',...
+                    'Step size tolerance reached'           ,...
+                    'Unexpectedly small stepsize'}
+                subFlag = FLAG_TOLX;
+              case 'Iteration limit reached'
+                subFlag = FLAG_MAXITER;
+              case 'Function/operator count limit reached'
+                subFlag = FLAG_MAXFUNEVALS;
+              otherwise
+                subFlag = FLAG_OTHER;
+            end
+            subopt = TfocsOut.err(end);
           end
       end
       
-      dx   = z-x;
+      searchDir = xProx - x;
+    else
+      subIters     = 0;
+      subProxEvals = 0;
+      
+      if debug 
+        subFlag  = 0;
+        subopt = 0;
+      end
+      
+      searchDir = -Df;
     end
     
     % ------------ Conduct line search ------------
+    
     xPrev  = x;
     fPrev  = f;
     DfPrev = Df;
     
-    % Conduct line search for a step length that safisfies the Armijo condition
-    if strcmp(method,'Newton')
+    if evalHess
       [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
-        LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
-          descCond, TolX, maxfunEvals - funEvals); 
-    elseif iter > 1 
-      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
-        LineSearch(x, dx, 1, f, h, Df'*dx, smoothF, nonsmoothF,...
-          descCond, TolX, maxfunEvals - funEvals); 
+        LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
+          descParam, xTol, maxfunEvals - funEvals); 
     else
-      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
-        CurvySearch(x, dx, min(1,1/norm(Df,1)), f, Df'*dx, smoothF, nonsmoothF,...
-          descCond, TolX, maxfunEvals - funEvals);           
-    end 
+      if iter > 1
+        [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+          LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
+            descParam, xTol, maxfunEvals - funEvals);
+      else
+        [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+          CurvySearch(x, searchDir, max(min(1,1/norm(Df)),xTol), f, Df'*searchDir,...
+            smoothF, nonsmoothF, descParam, xTol, maxfunEvals - funEvals); 
+      end
+    end
+    
+    % ------------ Select forcing term ------------
+    
+    if iter > 1 || evalHess
+      [~, quadDf] = quadF(x);
+      forcingTerm = min( 0.5, norm(Df-quadDf)/norm(Df) );
+    end
     
     % ------------ Collect data for display and output ------------
     
-    funEvals  = funEvals + lineSearchIters;
-    proxEvals = proxEvals + lineSearchIters;
-    if checkOpt
-      [h1, x1]  = nonsmoothF(x-Df,1); %#ok<ASGLU>
-      proxEvals = proxEvals + 1;
-      opt       = norm(x1-x,'inf'); 
-    end
+    funEvals  =  funEvals + lineSearchIters ;
+    proxEvals = proxEvals + lineSearchIters + subProxEvals;
+    [~, xProx ] = nonsmoothF( x - Df ,1);
+         opt    = norm( xProx - x ,'inf');
     
     Trace.f(iter+1)         = f;
     Trace.funEvals(iter+1)  = funEvals;
     Trace.proxEvals(iter+1) = proxEvals;
-    if checkOpt
-      Trace.optimality(iter+1) = opt; 
-    end
+    Trace.opt(iter+1)       = opt;
     
     if debug
-      Trace.dx(iter)              = norm(dx);
+      Trace.normSearchDir(iter)   = norm(searchDir);
       Trace.lineSearchFlag(iter)  = lineSearchFlag;
       Trace.lineSearchIters(iter) = lineSearchIters;
-      Trace.TolSub(iter)          = TolSub;
+      Trace.subFlags(iter) = subFlag;
+      Trace.subIters(iter) = subIters;
+      Trace.subopt(iter)   = subopt;
     end
     
     if display > 0 && mod(iter,display) == 0
-      if checkOpt
-        fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
-          iter, funEvals, proxEvals, step, f, opt);
-      else
-        fprintf(' %4d | %6d  %6d  %12.4e  %12.4e\n',...
-          iter, funEvals, proxEvals, step, f);
-      end
+      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...  
+        iter, funEvals, proxEvals, step, f, opt);
     end
     
     % ------------ Check stopping criteria ------------
     
-    % Check optimality condition
-    if checkOpt && opt <= TolOpt
-      flag    = FLAG_OPTIMAL;
-      message = MESSAGE_OPTIMAL;
+    if opt <= optTol
+      flag    = FLAG_OPT;
+      message = MSG_OPT;
       loop    = 0;
-      
-    % Check lack of progress
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= TolX 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xTol 
       flag    = FLAG_TOLX;
-      message = MESSAGE_TOLX;
+      message = MSG_TOLX;
       loop    = 0;
-    elseif abs(fPrev-f)/max(1,abs(fPrev)) <= TolFun
+    elseif abs(fPrev-f)/max(1,abs(fPrev)) <= funTol
       flag    = FLAG_TOLFUN;
-      message = MESSAGE_TOLFUN;
+      message = MSG_TOLFUN;
       loop    = 0;
-      
-    % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      message = MESSAGE_MAXITER;
+      message = MSG_MAXITER;
       loop    = 0;
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      message = MESSAGE_MAXFUNEVALS;
+      message = MSG_MAXFUNEVALS;
       loop    = 0;
     end
   end
@@ -394,48 +368,37 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   Trace.f         = Trace.f(1:iter+1);
   Trace.funEvals  = Trace.funEvals(1:iter+1);
   Trace.proxEvals = Trace.proxEvals(1:iter+1);
-  if checkOpt
-    Trace.optimality = Trace.optimality(1:iter+1);
-  end
+  Trace.opt       = Trace.opt  (1:iter+1);
   
   if debug
-    Trace.dx              = Trace.dx(1:iter);
+    Trace.normSearchDir   = Trace.normSearchDir(1:iter);
     Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
     Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
-    Trace.TolSub          = Trace.TolSub(1:iter);
+    Trace.subFlags = Trace.subFlags(1:iter);
+    Trace.subIters = Trace.subIters(1:iter);
+    Trace.subopt   = Trace.subopt(1:iter);
   end
   
   if display > 0 && mod(iter,display) > 0
-    if checkOpt
-      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
-        iter, funEvals, proxEvals, step, f, opt);
-    else
-      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e\n',...
-        iter, funEvals, proxEvals, step, f);
-    end
+    fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
+      iter, funEvals, proxEvals, step, f, opt);
   end
   
   output = struct(...
-    'flag'      , flag     ,...
-    'funEvals'  , funEvals ,...
-    'iterations', iter     ,...
-    'options'   , options  ,...
-    'proxEvals' , proxEvals,...
-    'Trace'     , Trace     ...
+    'flag'      , flag      ,...
+    'funEvals'  , funEvals  ,...
+    'iters'     , iter      ,...
+    'opt'       , opt       ,...
+    'options'   , options   ,...
+    'proxEvals' , proxEvals ,...
+    'Trace'     , Trace      ...
     );
-  if checkOpt
-     output.Optimality = opt;
-  end
   
   if display > 0
-    if checkOpt
-      fprintf(' %s\n',repmat('-',1,64));
-      fprintf(' %s\n',message)
-      fprintf(' %s\n',repmat('-',1,64));
-    else
-      fprintf(' %s\n',repmat('-',1,50));
-      fprintf(' %s\n',message)
-      fprintf(' %s\n',repmat('-',1,50));
-    end
+    fprintf(' %s\n',repmat('-',1,64));
+    fprintf(' %s\n',message)
+    fprintf(' %s\n',repmat('-',1,64));
   end
+  
+  clear global quadDf quadopt
   

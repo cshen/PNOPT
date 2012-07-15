@@ -1,6 +1,6 @@
 function varargout = ...
-  LineSearch(x, d, t, f, nonsmoothf, gtd, smoothF, nonsmoothF, descCond, TolX, maxIter)
-% LineSearch : Line search for step that satisfies a sufficient descent
+  LineSearch(x, d, t, f, nonsmoothf, Dftd, smoothF, nonsmoothF, descParam, xTol, maxIter)
+% LineSearch : Backtracking line search for step that satisfies a sufficient descent
 %   condition.
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
@@ -29,15 +29,15 @@ function varargout = ...
     else
       [ft, Dft] = smoothF(xt);
     end
-     ht       = nonsmoothF(xt);
-     ft       = ft + ht;
+     ht = nonsmoothF(xt);
+     ft = ft + ht;
     
     % Check termination criteria
-    De = gtd + Nonsmoothf1 - nonsmoothf;
-    if ft < f + descCond*t*De         % Sufficient descent condition satisfied
+    De = Dftd + Nonsmoothf1 - nonsmoothf;
+    if ft < f + descParam*t*De         % Sufficient descent condition satisfied
       flag = FLAG_SUFFDESCENT;  
       break
-    elseif t <= TolX            % Step length too small
+    elseif t <= xTol            % Step length too small
       flag = FLAG_TOLX;
       break
     elseif iter >= maxIter      % Too many line search iterations
@@ -46,11 +46,11 @@ function varargout = ...
     end
 
     % Backtrack if objective value not well-defined
-    if isnan(ft) || isinf(ft) || abs(ft-f-t*gtd) <= 1e-9
+    if isnan(ft) || isinf(ft) || abs(ft-f-t*Dftd) <= 1e-9
       t = be*t;
     % Safeguard quadratic interpolation
     else
-      tq = (-gtd*t^2) / (2*(ft-f-t*gtd));
+      tq = (-Dftd*t^2) / (2*(ft-f-t*Dftd));
       if 0.01 <= tq && tq <= 0.99*t 
         t = tq;
       else

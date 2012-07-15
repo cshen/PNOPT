@@ -1,4 +1,4 @@
-function Hx = LbfgsProd(sPrev, yPrev, et) 
+function Hx = LbfgsProd(sPrev, yPrev, de) 
 % LbfgsProd : Product with L-BFGS Hessian approximation
 % 
 %   $Revision: 0.1.2 $  $Date: 2012/06/15 $
@@ -18,11 +18,11 @@ function Hx = LbfgsProd(sPrev, yPrev, et)
 %           L'  , -diag(d1) ];
 %   Hx   = @(x) et*x - Qty2*(Qty3\(Qty2'*x));
 %   
-  R    = chol(et*(sPrev'*sPrev) + L*(diag(1./d1)*L'),'lower');
+  R    = chol(de*(sPrev'*sPrev) + L*(diag(1./d1)*L'),'lower');
   R1   = [diag(d2)       zeros(l);
           -L*diag(1./d2) R];
   R2   = [-diag(d2)      diag(1./d2)*L';
           zeros(l)       R'];
-  Qty2 = [yPrev, et*sPrev];
-  Hx   = @(x) et*x - Qty2*(R2\(R1\(Qty2'*x)));
+  Qty2 = [yPrev, de*sPrev];
+  Hx   = @(x) de*x - Qty2*(R2\(R1\(Qty2'*x)));
   

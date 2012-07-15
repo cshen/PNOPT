@@ -6,71 +6,79 @@ function [x, f, output] = QuasiNewton(fun, x, options)
 %   function value and gradient.
 % 
 % [x, f, output] = QuasiNewton(fun, x, options) replaces the default options 
-%   with those in options, a struct created using the SetPNoptOptions function.
+%   with those in options, a struct created using the PNoptimset function.
 % 
-  REVISION = '$Revision: 0.2.4$';
-  DATE     = '$Date: June 30, 2012$';
+  REVISION = '$Revision: 0.4.2$';
+  DATE     = '$Date: July 15, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
-% ============ Initialize ============
+% ============ Parse options ============
   
-  % Set default options
-  defaultOptions = SetPNoptOptions(...
-    'curvatureCond'   , 0.99    ,... % Curvature condition parameter
-    'debug'           , 0       ,... % debug mode 
-    'descCond'      , 0.0001  ,... % Armijo condition parameter
-    'display'         , 10      ,... % display frequency (<= 0 for no display) 
-    'LbfgsCorrections', 50      ,... % Number of L-BFGS corrections
-    'maxfunEvals'     , 50000   ,... % Max number of function evaluations
-    'maxIter'         , 500     ,... % Max number of iterations
-    'method'          , 'Lbfgs' ,... % method for choosing search directions
-    'TolFun'          , 1e-9    ,... % Stopping tolerance on objective function 
-    'TolOpt'          , 1e-6    ,... % Stopping tolerance on optimality
-    'TolX'            , 1e-9     ... % Stopping tolerance on solution
+  QNoptions = PNoptimset(...
+    'curvParam'   , 0.9     ,... % curvature condition parameter
+    'debug'       , 0       ,... % debug mode 
+    'descParam'   , 0.0001  ,... % Sufficient descent parameter
+    'display'     , 10      ,... % display frequency (<= 0 for no display) 
+    'LbfgsCorrs'  , 50      ,... % Number of L-BFGS corrections
+    'maxfunEvals' , 50000   ,... % Max number of function evaluations
+    'maxIter'     , 500     ,... % Max number of iterations
+    'method'      , 'Lbfgs' ,... % method for choosing search directions
+    'funTol'      , 1e-9    ,... % Stopping tolerance on objective function 
+    'optTol'      , 1e-6    ,... % Stopping tolerance on opt
+    'xTol'        , 1e-9     ... % Stopping tolerance on solution
     );
   
-  % Set stopping flags and messages
-  FLAG_OPTIMAL     = 1;
+  if nargin > 2
+    options = PNoptimset(QNoptions, options);
+  else
+    options = QNoptions;
+  end
+  
+  curvParam    = options.curvParam;
+  debug        = options.debug;
+  descParam    = options.descParam;
+  display      = options.display;
+  LbfgsCorrs   = options.LbfgsCorrs;
+  maxfunEvals  = options.maxfunEvals;
+  maxIter      = options.maxIter;
+  method       = options.method;
+  switch method
+    case 'Bfgs'
+      evalHess = 0;
+    case 'Lbfgs'
+      evalHess = 0;
+    case 'Newton'
+      evalHess = 1;
+  end
+  funTol       = options.funTol;
+  optTol       = options.optTol;
+  xTol         = options.xTol;
+  
+  % ============ Initialize local variables ============
+  
+  FLAG_OPT         = 1;
   FLAG_TOLX        = 2;
   FLAG_TOLFUN      = 3;
   FLAG_MAXITER     = 4;
   FLAG_MAXFUNEVALS = 5;
   
-  MESSAGE_OPTIMAL     = 'Optimality below TolOpt.';
-  MESSAGE_TOLX        = 'Relative change in x below TolX.';
-  MESSAGE_TOLFUN      = 'Relative change in function value below TolFun.';
-  MESSAGE_MAXITER     = 'Max number of iterations reached.';
-  MESSAGE_MAXFUNEVALS = 'Max number of function evaluations reached.';
+  MSG_OPT         = 'Optimality below optTol.';
+  MSG_TOLX        = 'Relative change in x below xTol.';
+  MSG_TOLFUN      = 'Relative change in function value below funTol.';
+  MSG_MAXITER     = 'Max number of iterations reached.';
+  MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
   
-  % Replace default option values with values in user-supplied options struct
-  if nargin > 2
-    options = SetPNoptOptions(defaultOptions, options);
-  else
-    options = defaultOptions;
-  end
+  iter = 0; 
+  loop = 1;
   
-  curvatureCond    = options.curvatureCond;
-  debug            = options.debug;
-  descCond         = options.descCond;
-  display          = options.display;
-  LbfgsCorrections = options.LbfgsCorrections;
-  maxfunEvals      = options.maxfunEvals;
-  maxIter          = options.maxIter;
-  method           = options.method;
-  TolFun           = options.TolFun;
-  TolOpt           = options.TolOpt;
-  TolX             = options.TolX;
-  
-  iter             = 0; 
-  loop             = 1;
-  Trace.f          = zeros(maxIter+1,1);
-  Trace.funEvals   = zeros(maxIter+1,1);
-  Trace.optimality = zeros(maxIter+1,1);
-  Trace.step       = zeros(maxIter,1);
+  Trace.f        = zeros(maxIter+1,1);
+  Trace.funEvals = zeros(maxIter+1,1);
+  Trace.opt      = zeros(maxIter+1,1);
+  Trace.step     = zeros(maxIter,1);
   
   if debug
-    Trace.dx              = zeros(maxIter,1);
+    Trace.normSearchDir   = zeros(maxIter,1);
     Trace.gtd             = zeros(maxIter,1);
     Trace.lineSearchFlag  = zeros(maxIter,1);
     Trace.lineSearchIters = zeros(maxIter,1);
@@ -81,13 +89,13 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     fprintf('           QuasiNewton v.%s (%s)\n', REVISION, DATE);
     fprintf(' %s\n',repmat('=',1,56));
     fprintf(' %4s   %6s  %12s  %12s  %12s \n',...
-      '','Fun.', 'Step len.', 'Obj. val.', 'optimality');
+      '','Fun.', 'Step len.', 'Obj. val.', 'Optimality');
     fprintf(' %s\n',repmat('-',1,56));
   end
   
   % ============ Evaluate objective function at starting x ============ 
   
-  if strcmp(method,'Newton')  
+  if evalHess
     [f, Df, Hf] = fun(x);
   else
     [f, Df] = fun(x);
@@ -96,11 +104,11 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   % ============ Start collecting data for display and output ============ 
   
   funEvals = 1;
-  opt      = norm(Df,'inf');
+  opt      = norm( Df ,'inf');
   
-  Trace.f(1)          = f;
-  Trace.funEvals(1)   = funEvals;
-  Trace.optimality(1) = opt;
+  Trace.f(1)        = f;
+  Trace.funEvals(1) = funEvals;
+  Trace.opt(1)      = opt;
   
   if display > 0
     fprintf(' %4d | %6d  %12s  %12.4e  %12.4e\n',...
@@ -109,9 +117,9 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   
   % ============ Check if starting x is optimal ============ 
   
-  if opt <= TolOpt      
-    flag    = FLAG_OPTIMAL;
-    message = MESSAGE_OPTIMAL;
+  if opt <= optTol      
+    flag    = FLAG_OPT;
+    message = MSG_OPT;
     loop    = 0;
   end
   
@@ -123,6 +131,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     % ------------ Compute search direction ------------
     
     switch method
+      
       % BFGS method
       case 'Bfgs'
         if iter > 1
@@ -132,10 +141,10 @@ function [x, f, output] = QuasiNewton(fun, x, options)
           if s'*y > 1e-9
             R = cholupdate(cholupdate(R, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
           end
-          dx = -R\(R'\Df);
+          searchDir = -R\(R'\Df);
         else
-          R  = eye(length(x));
-          dx = -Df;
+          R         = eye(length(x));
+          searchDir = -Df;
         end
         
       % Limited-memory BFGS method
@@ -144,30 +153,28 @@ function [x, f, output] = QuasiNewton(fun, x, options)
           s =  x - xPrev;
           y = Df - DfPrev;
           if y'*s > 1e-9
-            if size(sPrev,2) > LbfgsCorrections
-              sPrev = [sPrev(:,2:LbfgsCorrections), s];
-              yPrev = [yPrev(:,2:LbfgsCorrections), y];
-              et    = (y'*y)/(y'*s);
+            if size(sPrev,2) > LbfgsCorrs
+              sPrev = [sPrev(:,2:LbfgsCorrs), s];
+              yPrev = [yPrev(:,2:LbfgsCorrs), y];
+              de    = (y'*y)/(y'*s);
             else
               sPrev = [sPrev, s]; %#ok<AGROW>
               yPrev = [yPrev, y]; %#ok<AGROW>
-              et    = (y'*y)/(y'*s);
+              de    = (y'*y)/(y'*s);
             end
           end
-          dx = LbfgsSearchDir(sPrev, yPrev, et, Df);
+          searchDir = LbfgsSearchDir(sPrev, yPrev, de, Df);
         else
-          sPrev = zeros(length(x), 0);
-          yPrev = zeros(length(x), 0);
-          et    = 1;
-          dx    = -Df;
+          sPrev     = zeros(length(x), 0);
+          yPrev     = zeros(length(x), 0);
+          searchDir = -Df;
         end
         
       % Newton's method
       case 'Newton'
-        % If Hf is a function handle, use pcg to solve Newton system inexactly.
+        % If Hf is a function handle, use pcg to solve Newton system inexactHessly.
         if isa(Hf,'function_handle')
-          dx = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
-          
+          searchDir = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
         elseif isnumeric(Hf)
           if issparse(Hf)
             condHf = condest(Hf);
@@ -176,9 +183,9 @@ function [x, f, output] = QuasiNewton(fun, x, options)
           end
           
           if condHf < 1e9
-            dx = -Hf\Df;
+            searchDir = -Hf\Df;
           else
-            dx = -(Hf + 1e-9*eye(r))\Df;
+            searchDir = -(Hf + 1e-9*eye(r))\Df;
           end
         end
     end
@@ -189,34 +196,35 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     fPrev  = f;
     DfPrev = Df;
     
-    % Conduct line search for a step length that safisfies the Wolfe conditions
-    if strcmp(method,'Newton')
+    if evalHess
       [x, f, Df, Hf, step, lineSearchFlag, lineSearchIters] = ...
-        mtsrch(fun, x, f, Df, dx, 1, descCond, curvatureCond, max(TolX,1e-9),...
-          maxfunEvals - funEvals);
-    elseif iter > 1 
-      [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
-        mtsrch(fun, x, f, Df, dx, 1, descCond, curvatureCond, max(TolX,1e-9),...
-          maxfunEvals - funEvals);
+        MoreThuenteSearch(fun, x, f, Df, searchDir, 1, descParam, curvParam,...
+          max(xTol,1e-9), maxfunEvals - funEvals);
     else
-      [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
-        mtsrch(fun, x, f, Df, dx, min(1,1/norm(Df,1)), descCond, curvatureCond,...
-          max(TolX,1e-9), maxfunEvals - funEvals);
+      if iter > 1
+        [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
+          MoreThuenteSearch(fun, x, f, Df, searchDir, 1, descParam, curvParam,...
+          max(xTol,1e-9), maxfunEvals - funEvals);
+      else
+        [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
+          MoreThuenteSearch(fun, x, f, Df, searchDir, min(1,1/norm(Df)),...
+          descParam, curvParam, max(xTol,1e-9), maxfunEvals - funEvals);
+      end
     end
     
     % ------------ Collect data for display and output ------------
     
-    funEvals   = funEvals + lineSearchIters;   
-    opt = norm(Df,'inf');
+    funEvals = funEvals + lineSearchIters;   
+    opt      = norm( Df ,'inf');
     
-    Trace.f(iter+1)          = f;
-    Trace.funEvals(iter+1)   = funEvals;
-    Trace.optimality(iter+1) = opt;
-    Trace.step(iter)         = step;
+    Trace.f(iter+1)        = f;
+    Trace.funEvals(iter+1) = funEvals;
+    Trace.opt  (iter+1)    = opt;
+    Trace.step(iter)       = step;
     
     if debug
-      Trace.dx(iter)              = norm(dx);
-      Trace.gtd(iter)             = Df'*dx;
+      Trace.normSearchDir(iter)   = norm(searchDir);
+      Trace.gtd(iter)             = Df'*searchDir;
       Trace.lineSearchFlag(iter)  = lineSearchFlag;
       Trace.lineSearchIters(iter) = lineSearchIters;
     end
@@ -228,42 +236,37 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     
     % ------------ Check stopping criteria ------------
     
-    % Check optimality condition
-    if opt <= TolOpt
-      flag    = FLAG_OPTIMAL;
-      message = MESSAGE_OPTIMAL;
+    if opt <= optTol
+      flag    = FLAG_OPT;
+      message = MSG_OPT;
       loop    = 0;
-      
-    % Check lack of progress
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= TolX 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xTol 
       flag    = FLAG_TOLX;
-      message = MESSAGE_TOLX;
+      message = MSG_TOLX;
       loop    = 0;
-    elseif f <= fPrev && (fPrev-f)/max(1,abs(fPrev)) <= TolFun
+    elseif f <= fPrev && (fPrev-f)/max(1,abs(fPrev)) <= funTol
       flag    = FLAG_TOLFUN;
-      message = MESSAGE_TOLFUN;
+      message = MSG_TOLFUN;
       loop    = 0;
-      
-    % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      message = MESSAGE_MAXITER;
+      message = MSG_MAXITER;
       loop    = 0;
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      message = MESSAGE_MAXFUNEVALS;
+      message = MSG_MAXFUNEVALS;
       loop    = 0;
     end
   end
   
   % ============ Cleanup and exit ============
   
-  Trace.f          = Trace.f(1:iter+1);
-  Trace.funEvals   = Trace.funEvals(1:iter+1);
-  Trace.optimality = Trace.optimality(1:iter+1);
+  Trace.f        = Trace.f(1:iter+1);
+  Trace.funEvals = Trace.funEvals(1:iter+1);
+  Trace.opt      = Trace.opt  (1:iter+1);
   
   if debug
-    Trace.dx              = Trace.dx(1:iter);
+    Trace.normSearchDir   = Trace.normSearchDir(1:iter);
     Trace.gtd             = Trace.gtd(1:iter);
     Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
     Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
@@ -275,12 +278,12 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   end
       
   output = struct(...
-    'flag'      , flag     ,...
-    'funEvals'  , funEvals ,...
-    'iterations', iter     ,...
-    'optimality', opt      ,...
-    'options'   , options  ,...
-    'Trace'     , Trace     ...
+    'flag'     , flag     ,...
+    'funEvals' , funEvals ,...
+    'iters'    , iter     ,...
+    'opt'      , opt    ,...
+    'options'  , options  ,...
+    'Trace'    , Trace     ...
     );
   
   if display > 0

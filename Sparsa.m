@@ -1,78 +1,78 @@
-function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
-% spg : Spectral proximal gradient methods
+function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
+% Sparsa : Structured reconstruction by separable approximation
 % 
-% [x, f, output] = Spg(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
+% [x, f, output] = Sparsa(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
 %   of the objective function in composite form. smoothF is a handle to a function
 %   that returns the smooth function value and gradient. nonsmoothF is a handle 
-%   to a function that returns the nonsmooth function value and prox.
+%   to a function that returns the nonsmooth function value and proximal mapping.   
 % 
-% [x, f, output] = Spg(smoothF, nonsmoothF, x, options) replaces the default 
+% [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options) replaces the default 
 %   optimization options with those in options, a structure created using the 
-%   SetPNoptOptions function.
+%   PNoptimset function.
 % 
-  REVISION = '$Revision: 0.2.4$';
-  DATE     = '$Date: June 30, 2012$';
+  REVISION = '$Revision: 0.4.2$';
+  DATE     = '$Date: July 15, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
-% ============ Initialize ============
+% ============ Parse options ============
   
-  % Set default options
-  defaultOptions = SetPNoptOptions(...
-    'checkOpt'        , 1      ,... % Check optimality (requires prox evaluation)
-    'debug'           , 0      ,... % debug mode 
-    'descCond'        , 0.0001 ,... % Armijo condition parameter
-    'display'         , 1      ,... % display frequency (<= 0 for no display) 
-    'lineSearchmemory', 10     ,... % Number of previous function values to save
-    'maxfunEvals'     , 50000  ,... % Max number of function evaluations
-    'maxIter'         , 5000   ,... % Max number of iterations
-    'TolFun'          , 1e-9   ,... % Stopping tolerance on objective function 
-    'TolOpt'          , 1e-6   ,... % Stopping tolerance on optimality
-    'TolX'            , 1e-9    ... % Stopping tolerance on solution
+  SparsaOptions = PNoptimset(...
+    'checkOpt'      , 1      ,... % Check opt (requires prox evaluation)
+    'debug'         , 0      ,... % debug mode 
+    'descParam'     , 0.0001 ,... % Sufficient descent parameter
+    'display'       , 100    ,... % display frequency (<= 0 for no display) 
+    'lineSearchMem' , 10     ,... % Number of previous function values to save
+    'maxfunEvals'   , 50000  ,... % Max number of function evaluations
+    'maxIter'       , 5000   ,... % Max number of iterations
+    'funTol'        , 1e-9   ,... % Stopping tolerance on objective function 
+    'optTol'        , 1e-6   ,... % Stopping tolerance on opt
+    'xTol'          , 1e-9    ... % Stopping tolerance on solution
     );
   
-  % Set stopping flags and messages
-  FLAG_OPTIMAL     = 1;
+  if nargin > 3
+    options = PNoptimset(SparsaOptions, options);
+  else
+    options = SparsaOptions;
+  end
+  
+  checkOpt      = options.checkOpt;
+  debug         = options.debug;
+  descParam     = options.descParam;
+  display       = options.display;
+  lineSearchMem = options.lineSearchMem;
+  maxfunEvals   = options.maxfunEvals;
+  maxIter       = options.maxIter;
+  funTol        = options.funTol;
+  optTol        = options.optTol;
+  xTol          = options.xTol;
+  
+  % ============ Initialize variables ============
+  
+  FLAG_OPT         = 1;
   FLAG_TOLX        = 2;
   FLAG_TOLFUN      = 3;
   FLAG_MAXITER     = 4;
   FLAG_MAXFUNEVALS = 5;
   
-  MESSAGE_OPTIMAL     = 'Optimality below TolOpt.';
-  MESSAGE_TOLX        = 'Relative change in x below TolX.';
-  MESSAGE_TOLFUN      = 'Relative change in function value below TolFun.';
-  MESSAGE_MAXITER     = 'Max number of iterations reached.';
-  MESSAGE_MAXFUNEVALS = 'Max number of function evaluations reached.';
+  MSG_OPT         = 'Optimality below optTol.';
+  MSG_TOLX        = 'Relative change in x below xTol.';
+  MSG_TOLFUN      = 'Relative change in function value below funTol.';
+  MSG_MAXITER     = 'Max number of iterations reached.';
+  MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
   
-  % Replace default option values with values in user-supplied options struct
-  if nargin > 3
-    options = SetPNoptOptions(defaultOptions, options);
-  else
-    options = defaultOptions;
-  end
+  iter = 0; 
+  loop = 1;
   
-  checkOpt         = options.checkOpt;
-  debug            = options.debug;
-  descCond         = options.descCond;
-  display          = options.display;
-  lineSearchMemory = options.lineSearchMemory;
-  maxfunEvals      = options.maxfunEvals;
-  maxIter          = options.maxIter;
-  TolFun           = options.TolFun;
-  TolOpt           = options.TolOpt;
-  TolX             = options.TolX;
-  
-  iter            = 0; 
-  loop            = 1; 
   Trace.f         = zeros(maxIter+1,1);
   Trace.funEvals  = zeros(maxIter+1,1);
   Trace.proxEvals = zeros(maxIter+1,1);
   if checkOpt
-    Trace.optimality = zeros(maxIter+1,1);
+    Trace.opt     = zeros(maxIter+1,1);
   end
   
   if debug
-    Trace.dx              = zeros(maxIter,1);
+    Trace.normSearchDir   = zeros(maxIter,1);
     Trace.lineSearchFlag  = zeros(maxIter,1);
     Trace.lineSearchIters = zeros(maxIter,1);
   end
@@ -83,7 +83,7 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
       fprintf('                   SPG v.%s (%s)\n', REVISION, DATE);
       fprintf(' %s\n',repmat('=',1,64));
       fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
-        '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'optimality');
+        '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality');
       fprintf(' %s\n',repmat('-',1,64));
     else
       fprintf(' %s\n',repmat('=',1,50));
@@ -106,16 +106,15 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   funEvals  = 1;
   proxEvals = 0;
   if checkOpt
-    [h1, x1]  = nonsmoothF(x-Df,1); %#ok<ASGLU>
-    proxEvals = proxEvals + 1;
-    opt       = norm(x1-x,'inf'); 
+    [~, xProx ] = nonsmoothF( x - Df ,1);
+         opt    = norm( xProx - x ,'inf');
   end
   
   Trace.f(1)         = f;
   Trace.funEvals(1)  = funEvals;
   Trace.proxEvals(1) = proxEvals;
   if checkOpt
-    Trace.optimality(1) = opt; 
+    Trace.opt(1)     = opt; 
   end
   
   if display > 0    
@@ -130,9 +129,9 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   
   % ============ Check if starting x is optimal ============ 
   
-  if checkOpt && opt <= TolOpt
-    flag    = FLAG_OPTIMAL;
-    message = MESSAGE_OPTIMAL;
+  if checkOpt && opt <= optTol
+    flag    = FLAG_OPT;
+    message = MSG_OPT;
     loop    = 0;
   end
 
@@ -146,52 +145,51 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     if iter > 1
       s  = x-xPrev;
       y  = Df-DfPrev;
-      BbStepLen  = (y'*s)/(y'*y);
-      if BbStepLen <= 1e-9 || 1e9 <= BbStepLen
-        BbStepLen = min(1,1/norm(Df,1));
+      BBstep  = (y'*s)/(y'*y);
+      if BBstep <= 1e-9 || 1e9 <= BBstep
+        BBstep = min(1,1/norm(Df,1));
       end
     else
-      BbStepLen = min(1,1/norm(Df,1));
+      BBstep = min(1,1/norm(Df,1));
     end
     
     % ------------ Conduct line search ------------
+    
     xPrev   = x;
-    if iter+1 > lineSearchMemory
+    if iter+1 > lineSearchMem
       fPrev = [fPrev(2:end), f];
     else
       fPrev(iter) = f;
     end
     DfPrev  = Df;
     
-    % Conduct line search for a step length that safisfies the Armijo condition
     [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
-      CurvySearch(x, -Df, BbStepLen, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
-        descCond, TolX, maxfunEvals - funEvals); 
+      CurvySearch(x, -Df, BBstep, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
+        descParam, xTol, maxfunEvals - funEvals); 
     
     % ------------ Collect data and display status ------------
     
     funEvals  = funEvals + lineSearchIters;
     proxEvals = proxEvals + lineSearchIters;
     if checkOpt
-      [h1, x1] = nonsmoothF(x-Df,1); %#ok<ASGLU>
-      proxEvals = proxEvals + 1;
-      opt      = norm(x1-x,'inf'); 
+      [~, xProx ] = nonsmoothF( x - Df ,1);
+           opt    = norm( xProx - x ,'inf');
     end
     
     Trace.f(iter+1)         = f;
     Trace.funEvals(iter+1)  = funEvals;
     Trace.proxEvals(iter+1) = proxEvals;
     if checkOpt
-      Trace.optimality(iter+1) = opt; 
+      Trace.opt(iter+1)     = opt; 
     end
     
     if debug
-      Trace.dx(iter)              = norm(Df);
+      Trace.normSearchDir(iter)   = norm(Df);
       Trace.lineSearchFlag(iter)  = lineSearchFlag;
       Trace.lineSearchIters(iter) = lineSearchIters;
     end
     
-    if display > 0 && mod(iter,display > 0) == 0
+    if display > 0 && mod(iter,display) == 0
       if checkOpt
         fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
           iter, funEvals, proxEvals, step, f, opt);
@@ -203,30 +201,25 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
     
     % ------------ Check stopping criteria ------------
     
-    % Check optimality condition
-    if checkOpt && opt <= TolOpt
-      flag    = FLAG_OPTIMAL;
-      message = MESSAGE_OPTIMAL;
+    if checkOpt && opt <= optTol
+      flag    = FLAG_OPT;
+      message = MSG_OPT;
       loop    = 0;
-      
-    % Check lack of progress
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= TolX 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xTol 
       flag    = FLAG_TOLX;
-      message = MESSAGE_TOLX;
+      message = MSG_TOLX;
       loop    = 0;
-    elseif f <= min(fPrev) && abs(min(fPrev)-f)/max(1,abs(fPrev(end))) <= TolFun
+    elseif f <= min(fPrev) && abs(min(fPrev)-f)/max(1,abs(fPrev(end))) <= funTol
       flag    = FLAG_TOLFUN;
-      message = MESSAGE_TOLFUN;
+      message = MSG_TOLFUN;
       loop    = 0;
-      
-    % Check function evaluation/iteration cap
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      message = MESSAGE_MAXITER;
+      message = MSG_MAXITER;
       loop    = 0;
     elseif funEvals >= maxfunEvals
       flag    = FLAG_MAXFUNEVALS;
-      message = MESSAGE_MAXFUNEVALS;
+      message = MSG_MAXFUNEVALS;
       loop    = 0;
     end
   end
@@ -237,16 +230,16 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   Trace.funEvals  = Trace.funEvals(1:iter+1);
   Trace.proxEvals = Trace.proxEvals(1:iter+1);
   if checkOpt
-    Trace.optimality = Trace.optimality(1:iter+1);
+    Trace.opt     = Trace.opt  (1:iter+1);
   end
   
   if debug
-    Trace.dx              = Trace.dx(1:iter);
+    Trace.normSearchDir   = Trace.normSearchDir(1:iter);
     Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
     Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
   end
   
-  if display > 0 && mod(iter,display > 0) > 0
+  if display > 0 && mod(iter,display) > 0
     if checkOpt
       fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
         iter, funEvals, proxEvals, step, f, opt);
@@ -259,13 +252,13 @@ function [x, f, output] = spg(smoothF, nonsmoothF, x, options)
   output = struct(...
     'flag'      , flag      ,...
     'funEvals'  , funEvals  ,...
-    'iterations', iter      ,...
+    'iters'     , iter      ,...
     'options'   , options   ,...
     'proxEvals' , proxEvals ,...
     'Trace'     , Trace      ...
     );
   if checkOpt
-     output.Optimality = opt;
+     output.opt = opt;
   end
   
   if display > 0

@@ -1,4 +1,4 @@
-      function varargout = mtsrch(fun,x,f,g,s,stp,...
+      function varargout = MoreThuenteStep(fun,x,f,g,s,stp,...
                  ftol,gtol, xtol, maxfev)
 %     **********
 %
@@ -106,12 +106,12 @@
                   break
          end
 % 
-%           Call cstep to update the interval of uncertainty 
-%           and to compute the new step.
+%        Call cstep to update the interval of uncertainty 
+%        and to compute the new step.
 %
-            [stx,fx,dgx,sty,fy,dgy,stp,f,dg,brackt,infoc] ...
-             = mtstep(stx,fx,dgx,sty,fy,dgy,stp,f,dg, ...
-                     brackt,stmin,stmax); %#ok<ASGLU,NASGU>
+         [stx,fx,dgx,sty,fy,dgy,stp,f,dg,brackt,infoc] ...
+          = MoreThuenteStep(stx,fx,dgx,sty,fy,dgy,stp,f,dg, ...
+                  brackt,stmin,stmax); %#ok<ASGLU,NASGU>
 % 
 %        Force a sufficient decrease in the size of the
 %        interval of uncertainty.

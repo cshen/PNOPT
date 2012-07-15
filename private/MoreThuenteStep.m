@@ -1,9 +1,9 @@
      function  [stx,fx,dx,sty,fy,dy,stp,fp,dp,brackt,info] ...
-       = mtstep(stx,fx,dx,sty,fy,dy,stp,fp,dp,brackt,stpmin,stpmax)
+       = MoreThuenteStep(stx,fx,dx,sty,fy,dy,stp,fp,dp,brackt,stpmin,stpmax)
 %   **********
 %
-% mtstep seeks a safeguarded step for a line search and updates an interval of 
-% uncertainty that brackets a minimizer of the function. 
+% MoreThuenteStep seeks a safeguarded step for a line search and updates an 
+% interval of uncertainty that brackets a minimizer of the function. 
 %
 %   Dianne O'Leary   July 1991
 %   Yuekai Sun       Mar. 2012

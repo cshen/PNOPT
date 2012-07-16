@@ -29,7 +29,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     'subMethod'   , 'Tfocs' ,... % Solver for solving subproblems
     'funTol'      , 1e-9    ,... % Stopping tolerance on relative change in the objective function 
     'optTol'      , 1e-6    ,... % Stopping tolerance on optimality condition
-    'xTol'        , 1e-9     ... % Stopping tolerance on solution
+    'xtol'        , 1e-9     ... % Stopping tolerance on solution
     );
   
   SparsaOptions = PNoptimset(...
@@ -69,7 +69,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   subMethod    = options.subMethod;
   funTol       = options.funTol;
   optTol       = options.optTol;
-  xTol         = options.xTol;
+  xtol         = options.xtol;
   
   switch subMethod
     case 'Sparsa'
@@ -97,7 +97,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   FLAG_OTHER       = 6;
   
   MSG_OPT         = 'Optimality below optTol.';
-  MSG_TOLX        = 'Relative change in x below xTol.';
+  MSG_TOLX        = 'Relative change in x below xtol.';
   MSG_TOLFUN      = 'Relative change in function value below funTol.';
   MSG_MAXITER     = 'Max number of iterations reached.';
   MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
@@ -292,16 +292,16 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     if evalHess
       [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
         LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
-          descParam, xTol, maxfunEvals - funEvals); 
+          descParam, xtol, maxfunEvals - funEvals); 
     else
       if iter > 1
         [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
           LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
-            descParam, xTol, maxfunEvals - funEvals);
+            descParam, xtol, maxfunEvals - funEvals);
       else
         [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
-          CurvySearch(x, searchDir, max(min(1,1/norm(Df)),xTol), f, Df'*searchDir,...
-            smoothF, nonsmoothF, descParam, xTol, maxfunEvals - funEvals); 
+          CurvySearch(x, searchDir, max(min(1,1/norm(Df)),xtol), f, Df'*searchDir,...
+            smoothF, nonsmoothF, descParam, xtol, maxfunEvals - funEvals); 
       end
     end
     
@@ -344,7 +344,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
       flag    = FLAG_OPT;
       message = MSG_OPT;
       loop    = 0;
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xTol 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xtol 
       flag    = FLAG_TOLX;
       message = MSG_TOLX;
       loop    = 0;

@@ -27,7 +27,7 @@ function options = PNoptimset(varargin)
     fprintf('    subMethod : [           string |     Tfocs ] \n');
     fprintf('       funTol : [  positive scalar |      1e-9 ] \n');
     fprintf('       optTol : [  positive scalar |      1e-6 ] \n');
-    fprintf('         xTol : [  positive scalar |      1e-9 ] \n');
+    fprintf('         xtol : [  positive scalar |      1e-9 ] \n');
     fprintf('\n');
     return;
   end
@@ -48,7 +48,7 @@ function options = PNoptimset(varargin)
     'TfocsOpts     '
     'funTol        '
     'optTol        '
-    'xTol          '
+    'xtol          '
     'useMex        '
     ];
   

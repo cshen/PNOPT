@@ -26,7 +26,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     'method'      , 'Lbfgs' ,... % method for choosing search directions
     'funTol'      , 1e-9    ,... % Stopping tolerance on objective function 
     'optTol'      , 1e-6    ,... % Stopping tolerance on opt
-    'xTol'        , 1e-9     ... % Stopping tolerance on solution
+    'xtol'        , 1e-9     ... % Stopping tolerance on solution
     );
   
   if nargin > 2
@@ -53,7 +53,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   end
   funTol       = options.funTol;
   optTol       = options.optTol;
-  xTol         = options.xTol;
+  xtol         = options.xtol;
   
   % ============ Initialize local variables ============
   
@@ -64,7 +64,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
   FLAG_MAXFUNEVALS = 5;
   
   MSG_OPT         = 'Optimality below optTol.';
-  MSG_TOLX        = 'Relative change in x below xTol.';
+  MSG_TOLX        = 'Relative change in x below xtol.';
   MSG_TOLFUN      = 'Relative change in function value below funTol.';
   MSG_MAXITER     = 'Max number of iterations reached.';
   MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
@@ -176,17 +176,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
         if isa(Hf,'function_handle')
           searchDir = pcg(Hf, -Df, min(0.5,sqrt(opt))*opt);
         elseif isnumeric(Hf)
-          if issparse(Hf)
-            condHf = condest(Hf);
-          else
-            condHf = cond(Hf);
-          end
-          
-          if condHf < 1e9
-            searchDir = -Hf\Df;
-          else
-            searchDir = -(Hf + 1e-9*eye(r))\Df;
-          end
+          searchDir = -Hf\Df;
         end
     end
     
@@ -199,16 +189,16 @@ function [x, f, output] = QuasiNewton(fun, x, options)
     if evalHess
       [x, f, Df, Hf, step, lineSearchFlag, lineSearchIters] = ...
         MoreThuenteSearch(fun, x, f, Df, searchDir, 1, descParam, curvParam,...
-          max(xTol,1e-9), maxfunEvals - funEvals);
+          max(xtol,1e-9), maxfunEvals - funEvals);
     else
       if iter > 1
         [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
           MoreThuenteSearch(fun, x, f, Df, searchDir, 1, descParam, curvParam,...
-          max(xTol,1e-9), maxfunEvals - funEvals);
+          max(xtol,1e-9), maxfunEvals - funEvals);
       else
         [x, f, Df, step, lineSearchFlag, lineSearchIters] = ...
           MoreThuenteSearch(fun, x, f, Df, searchDir, min(1,1/norm(Df)),...
-          descParam, curvParam, max(xTol,1e-9), maxfunEvals - funEvals);
+          descParam, curvParam, max(xtol,1e-9), maxfunEvals - funEvals);
       end
     end
     
@@ -240,7 +230,7 @@ function [x, f, output] = QuasiNewton(fun, x, options)
       flag    = FLAG_OPT;
       message = MSG_OPT;
       loop    = 0;
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xTol 
+    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xtol 
       flag    = FLAG_TOLX;
       message = MSG_TOLX;
       loop    = 0;

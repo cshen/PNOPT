@@ -13,13 +13,13 @@ function options = PNoptimset(varargin)
 % 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
-    fprintf('Default parameters for PNOPT:\n');
+    fprintf('Default parameters for PNopt:\n');
     fprintf('     checkOpt : [          logical |      1 ] \n');
     fprintf('    curvParam : [  positive scalar |    0.9 ] \n');    
     fprintf('        debug : [          logical |      0 ] \n');
     fprintf('    descParam : [  positive scalar | 0.0001 ] \n');
     fprintf('      display : [ positive integer |     10 ] \n');
-    fprintf('     LbfgsMem : [ positive integer |     50 ] \n');
+    fprintf('   LbfgsCorrs : [ positive integer |     50 ] \n');
     fprintf('lineSearchMem : [ positive integer |     10 ] \n');
     fprintf('  maxfunEvals : [ positive integer |   5000 ] \n');
     fprintf('      maxIter : [ positive integer |    500 ] \n');
@@ -38,7 +38,7 @@ function options = PNoptimset(varargin)
     'debug         '
     'descParam     '
     'display       '
-    'LbfgsMem      '
+    'LbfgsCorrs    '
     'lineSearchMem '
     'maxfunEvals   '
     'maxIter       '

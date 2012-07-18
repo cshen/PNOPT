@@ -1,11 +1,12 @@
 function varargout = ...
-  LineSearch(x, d, t, f, nonsmoothf, Dftd, smoothF, nonsmoothF, descParam, xTol, maxIter)
+  LineSearch(x, d, t, f, nonsmoothf, Dftd, smoothF, nonsmoothF, descParam, xtol, maxIter)
 % LineSearch : Backtracking line search for step that satisfies a sufficient descent
 %   condition.
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
 % 
 % --------------------Initialize--------------------
+
   % Set line search parameters
   be = 0.5;
 
@@ -37,7 +38,7 @@ function varargout = ...
     if ft < f + descParam*t*De         % Sufficient descent condition satisfied
       flag = FLAG_SUFFDESCENT;  
       break
-    elseif t <= xTol            % Step length too small
+    elseif t <= xtol            % Step length too small
       flag = FLAG_TOLX;
       break
     elseif iter >= maxIter      % Too many line search iterations

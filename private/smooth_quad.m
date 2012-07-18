@@ -1,20 +1,19 @@
-function [f, Df] = smooth_quad(Hx, g, x, y)
+function [f, Df] = smooth_quad(P, q, x)
 % smooth_quad : Quadratic function
 %
 %   $Revision: 0.1.2 $  $Date: 2012/06/24 $
 % 
   global quadDf
   
-  dx  = y-x;
-  if isa(Hx,'function_handle')
-    Hdx = Hx(dx);
-  elseif isnumeric(Hx)
-    Hdx = Hx*dx;
+  if isa(P,'function_handle')
+    Px = P(x);
+  elseif isnumeric(P)
+    Px = P*x;
   end
   
-  f = 0.5*dx'*Hdx + g'*dx;
+  f = 0.5*x'*Px + q'*x;
   if nargout > 1
-    quadDf = Hdx + g;
+    quadDf = Px + q;
     Df = quadDf;
   end
   

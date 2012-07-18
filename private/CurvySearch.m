@@ -1,5 +1,5 @@
 function varargout = ...
-  CurvySearch(x, d, t, f, Dftd, smoothF, nonsmoothF, descParam, xTol, maxIter)
+  CurvySearch(x, d, t, f, Dftd, smoothF, nonsmoothF, descParam, xtol, maxIter)
 % CurvySearch : Curve search for step that satisfies the Armijo condition
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
@@ -33,7 +33,7 @@ function varargout = ...
     if ft < max(f) + descParam*t*De    % Sufficient descent condition satisfied
       flag = FLAG_SUFFDESCENT;  
       break
-    elseif t <= xTol            % Step length too small
+    elseif t <= xtol            % Step length too small
       flag = FLAG_TOLX;
       break
     elseif iter >= maxIter      % Too many line search iterations

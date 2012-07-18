@@ -20,14 +20,14 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
   SparsaOptions = PNoptimset(...
     'checkOpt'      , 1      ,... % Check opt (requires prox evaluation)
     'debug'         , 0      ,... % debug mode 
-    'descParam'     , 0.0001 ,... % Sufficient descent parameter
+    'descParam'     , 0.0001 ,... % sufficient descent parameter
     'display'       , 100    ,... % display frequency (<= 0 for no display) 
-    'lineSearchMem' , 10     ,... % Number of previous function values to save
-    'maxfunEvals'   , 50000  ,... % Max number of function evaluations
-    'maxIter'       , 5000   ,... % Max number of iterations
-    'funTol'        , 1e-9   ,... % Stopping tolerance on objective function 
-    'optTol'        , 1e-6   ,... % Stopping tolerance on opt
-    'xtol'          , 1e-9    ... % Stopping tolerance on solution
+    'lineSearchMem' , 10     ,... % number of previous function values to save
+    'maxfunEvals'   , 50000  ,... % max number of function evaluations
+    'maxIter'       , 5000   ,... % max number of iterations
+    'funTol'        , 1e-9   ,... % stopping tolerance on objective function 
+    'optTol'        , 1e-6   ,... % stopping tolerance on opt
+    'xtol'          , 1e-9    ... % stopping tolerance on solution
     );
   
   if nargin > 3
@@ -47,17 +47,17 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
   optTol        = options.optTol;
   xtol          = options.xtol;
   
-  % ============ Initialize variables ============
+% ============ Initialize variables ============
   
   FLAG_OPT         = 1;
-  FLAG_TOLX        = 2;
-  FLAG_TOLFUN      = 3;
+  FLAG_XTOL        = 2;
+  FLAG_FUNTOL      = 3;
   FLAG_MAXITER     = 4;
   FLAG_MAXFUNEVALS = 5;
   
   MSG_OPT         = 'Optimality below optTol.';
-  MSG_TOLX        = 'Relative change in x below xtol.';
-  MSG_TOLFUN      = 'Relative change in function value below funTol.';
+  MSG_XTOL        = 'Relative change in x below xtol.';
+  MSG_FUNTOL      = 'Relative change in function value below funTol.';
   MSG_MAXITER     = 'Max number of iterations reached.';
   MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
   
@@ -95,13 +95,13 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
     end
   end
   
-  % ============ Evaluate objective function at starting x ============ 
+% ============ Evaluate objective function at starting x ============ 
   
   [f, Df] = smoothF(x);
    h      = nonsmoothF(x);
    f      = f + h;
   
-  % ============ Start collecting data for display and output ============ 
+% ============ Start collecting data for display and output ============ 
   
   funEvals  = 1;
   proxEvals = 0;
@@ -127,7 +127,7 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
     end
   end
   
-  % ============ Check if starting x is optimal ============ 
+% ============ Check if starting x is optimal ============ 
   
   if checkOpt && opt <= optTol
     flag    = FLAG_OPT;
@@ -140,7 +140,7 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
   while loop
     iter = iter+1; 
     
-    % ------------ Compute search direction ------------
+  % ------------ Compute search direction ------------
     
     if iter > 1
       s  = x-xPrev;
@@ -153,7 +153,7 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
       BBstep = min(1,1/norm(Df,1));
     end
     
-    % ------------ Conduct line search ------------
+  % ------------ Conduct line search ------------
     
     xPrev   = x;
     if iter+1 > lineSearchMem
@@ -167,7 +167,7 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
       CurvySearch(x, -Df, BBstep, fPrev, -norm(Df)^2, smoothF, nonsmoothF,...
         descParam, xtol, maxfunEvals - funEvals); 
     
-    % ------------ Collect data and display status ------------
+  % ------------ Collect data and display status ------------
     
     funEvals  = funEvals + lineSearchIters;
     proxEvals = proxEvals + lineSearchIters;
@@ -199,19 +199,19 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
       end
     end
     
-    % ------------ Check stopping criteria ------------
+  % ------------ Check stopping criteria ------------
     
     if checkOpt && opt <= optTol
       flag    = FLAG_OPT;
       message = MSG_OPT;
       loop    = 0;
     elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xtol 
-      flag    = FLAG_TOLX;
-      message = MSG_TOLX;
+      flag    = FLAG_XTOL;
+      message = MSG_XTOL;
       loop    = 0;
     elseif f <= min(fPrev) && abs(min(fPrev)-f)/max(1,abs(fPrev(end))) <= funTol
-      flag    = FLAG_TOLFUN;
-      message = MSG_TOLFUN;
+      flag    = FLAG_FUNTOL;
+      message = MSG_FUNTOL;
       loop    = 0;
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
@@ -224,7 +224,7 @@ function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
     end
   end
   
-  % ============ Cleanup and exit ============
+% ============ Cleanup and exit ============
   
   Trace.f         = Trace.f(1:iter+1);
   Trace.funEvals  = Trace.funEvals(1:iter+1);

@@ -1,5 +1,5 @@
 function s = mergestruct(s1,s2)
-% MergeStruct : Merge two structures
+% mergestruct : Merge two structures
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/07/15 $
 % 

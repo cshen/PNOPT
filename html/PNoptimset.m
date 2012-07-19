@@ -19,7 +19,7 @@ function options = PNoptimset(varargin)
     fprintf('        debug : [          logical |      0 ] \n');
     fprintf('    descParam : [  positive scalar | 0.0001 ] \n');
     fprintf('      display : [ positive integer |     10 ] \n');
-    fprintf('   LbfgsCorrs : [ positive integer |     50 ] \n');
+    fprintf('     LbfgsMem : [ positive integer |     50 ] \n');
     fprintf('lineSearchMem : [ positive integer |     10 ] \n');
     fprintf('  maxfunEvals : [ positive integer |   5000 ] \n');
     fprintf('      maxIter : [ positive integer |    500 ] \n');
@@ -38,7 +38,7 @@ function options = PNoptimset(varargin)
     'debug         '
     'descParam     '
     'display       '
-    'LbfgsCorrs    '
+    'LbfgsMem      '
     'lineSearchMem '
     'maxfunEvals   '
     'maxIter       '

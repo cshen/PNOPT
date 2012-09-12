@@ -1,13 +1,13 @@
-function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
-% ProxNewton : Proximal Newton method
+function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
+% ProxQuasiNewton : Proximal quasi-Newton-type methods
 % 
-% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x) starts at x and seeks a 
-%   minimizer of the objective function in composite form. smoothF is a handle
-%   to a function that returns the smooth function value, gradient and Hessian. 
-%   nonsmoothF is a handle to a function that returns the nonsmooth function 
-%   value and proximal mapping. 
+% [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x) starts at x and seeks 
+%   a minimizer of the objective function in composite form. smoothF is a handle
+%   to a function that returns the smooth function value and gradient. nonsmoothF
+%   is a handle to a function that returns the nonsmooth function value and 
+%   proximal mapping. 
 % 
-% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options) replaces the   
+% [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options) replaces the   
 %   default optimization options with those in options, a structure created 
 %   using the PNoptimset function.
 % 
@@ -25,6 +25,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     'LbfgsMem'    , 50      ,... % L-BFGS memory
     'maxfunEvals' , 5000    ,... % max number of function evaluations
     'maxIter'     , 500     ,... % max number of iterations
+    'method'      , 'Lbfgs' ,... % method for building Hessian approximation
     'subMethod'   , 'Tfocs' ,... % solver for solving subproblems
     'funTol'      , 1e-9    ,... % stopping tolerance on relative change in the objective function 
     'optTol'      , 1e-6    ,... % stopping tolerance on optimality condition
@@ -55,6 +56,15 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   display      = options.display;
   maxfunEvals  = options.maxfunEvals;
   maxIter      = options.maxIter;
+  method       = options.method;
+  switch method
+    case 'Bfgs'
+      
+    case 'Lbfgs'
+      LbfgsMem = options.LbfgsMem;
+    otherwise
+      error(sprintf('Unrecognized method ''%s''.', method)) %#ok<SPERR>
+  end
   subMethod    = options.subMethod;
   funTol       = options.funTol;
   optTol       = options.optTol;
@@ -123,7 +133,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
 % ------------ Evaluate objective function at starting x ------------
   
-  [f, Df, Hf] = smoothF(x);
+  [f, Df] = smoothF(x);
    h = nonsmoothF(x);
    f = f + h;
   
@@ -157,80 +167,143 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   while loop
     iter = iter+1; 
     
-  % ------------ Solve subproblem for a search direction ------------
+  % ------------ Update Hessian approximation ------------
     
-    quadF = @(z) smooth_quad(Hf, Df, z-x);
-
-    switch subMethod
-
-      % SpaRSA
-      case 'Sparsa'
-        SparsaOptions = PNoptimset(SparsaOptions ,...
-          'optTol', max( 0.5*optTol, forcingTerm*opt ) ...
-          );  
-
-        [xProx, ~, spgOutput] = ...
-          Sparsa(quadF, nonsmoothF, x, SparsaOptions); 
-
-      % ------------ Collect data from subproblem solve ------------
-
-        subIters     = spgOutput.iters;
-        subProxEvals = spgOutput.proxEvals;
-
-        if debug
-          subFlag = spgOutput.flag;
-          subopt  = spgOutput.opt;
-        end
-
-      % TFOCS 
-      case 'Tfocs'
-        TfocsOpts.stopFcn = @(f,x) tfocs_stop( x, nonsmoothF,...
-          max( 0.5*optTol, forcingTerm*opt ) );
-
-        [xProx, TfocsOut] = ...
-          tfocs(quadF, [], nonsmoothF, x, TfocsOpts);
-
-        subIters       = TfocsOut.niter;
-        if isfield(TfocsOpts, 'countOps') && TfocsOpts.countOps
-          subProxEvals = TfocsOut.counts(end,5);
-        else
-          subProxEvals = TfocsOut.niter;
-        end
-
-        if debug
-          switch TfocsOut.status
-            case 'Reached user''s supplied stopping criteria no. 1'
-              subFlag = FLAG_OPT;
-            case {'Step size tolerance reached (||dx||=0)',...
-                  'Step size tolerance reached'           ,...
-                  'Unexpectedly small stepsize'}
-              subFlag = FLAG_XTOL;
-            case 'Iteration limit reached'
-              subFlag = FLAG_MAXITER;
-            case 'Function/operator count limit reached'
-              subFlag = FLAG_MAXFUNEVALS;
-            otherwise
-              subFlag = FLAG_OTHER;
+    switch method
+      
+      % BFGS method
+      case 'Bfgs'
+        if iter > 1
+          s =  x - xPrev;
+          y = Df - DfPrev;
+          qty1 = cholB'*(cholB*s);
+          if s'*y > 1e-9
+            cholB = cholupdate(cholupdate(cholB, y/sqrt(y'*s)), qty1/sqrt(s'*qty1),'-');
           end
-          subopt = TfocsOut.err(end);
+          Hf = @(x) cholB'*(cholB*x);
+        else
+          cholB = eye(length(x));
+        end
+
+      % Limited-memory BFGS method
+      case 'Lbfgs'
+        if iter > 1
+          s =  x - xPrev;
+          y = Df - DfPrev;
+          if y'*s > 1e-9
+            if size(sPrev,2) > LbfgsMem
+              sPrev = [sPrev(:,2:LbfgsMem), s];
+              yPrev = [yPrev(:,2:LbfgsMem), y];
+              de    = (y'*y)/(y'*s);
+            else
+              sPrev = [sPrev, s]; %#ok<AGROW>
+              yPrev = [yPrev, y]; %#ok<AGROW>
+              de    = (y'*y)/(y'*s);
+            end
+          end
+          Hf = LbfgsProd(sPrev, yPrev, de);
+        else
+          sPrev = zeros(length(x), 0);
+          yPrev = zeros(length(x), 0);
+          de    = 1;
         end
     end
+    
+  % ------------ Solve subproblem for a search direction ------------
+    
+    if iter > 1 
+      quadF = @(z) smooth_quad(Hf, Df, z-x);
+      
+      switch subMethod
+        
+        % SpaRSA
+        case 'Sparsa'
+          SparsaOptions = PNoptimset(SparsaOptions ,...
+            'optTol', max( 0.5*optTol, forcingTerm*opt ) ...
+            );  
+          
+          [xProx, ~, spgOutput] = ...
+            Sparsa(quadF, nonsmoothF, x, SparsaOptions); 
 
-    searchDir = xProx - x;
+        % ------------ Collect data from subproblem solve ------------
+          
+          subIters     = spgOutput.iters;
+          subProxEvals = spgOutput.proxEvals;
+          
+          if debug
+            subFlag = spgOutput.flag;
+            subopt  = spgOutput.opt;
+          end
+        
+        % TFOCS 
+        case 'Tfocs'
+          TfocsOpts.stopFcn = @(f,x) tfocs_stop( x, nonsmoothF,...
+            max( 0.5*optTol, forcingTerm*opt ) );
+
+          [xProx, TfocsOut] = ...
+            tfocs(quadF, [], nonsmoothF, x, TfocsOpts);
+        
+          subIters       = TfocsOut.niter;
+          if isfield(TfocsOpts, 'countOps') && TfocsOpts.countOps
+            subProxEvals = TfocsOut.counts(end,5);
+          else
+            subProxEvals = TfocsOut.niter;
+          end
+          
+          if debug
+            switch TfocsOut.status
+              case 'Reached user''s supplied stopping criteria no. 1'
+                subFlag = FLAG_OPT;
+              case {'Step size tolerance reached (||dx||=0)',...
+                    'Step size tolerance reached'           ,...
+                    'Unexpectedly small stepsize'}
+                subFlag = FLAG_XTOL;
+              case 'Iteration limit reached'
+                subFlag = FLAG_MAXITER;
+              case 'Function/operator count limit reached'
+                subFlag = FLAG_MAXFUNEVALS;
+              otherwise
+                subFlag = FLAG_OTHER;
+            end
+            subopt = TfocsOut.err(end);
+          end
+      end
+      
+      searchDir = xProx - x;
+    else
+      subIters     = 0;
+      subProxEvals = 0;
+      
+      if debug 
+        subFlag  = 0;
+        subopt = 0;
+      end
+      
+      searchDir = -Df;
+    end
     
   % ------------ Conduct line search ------------
     
     xPrev  = x;
     fPrev  = f;
+    DfPrev = Df;
     
-    [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
-      LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
-        descParam, xtol, maxfunEvals - funEvals); 
+    if iter > 1
+      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+        LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
+          descParam, xtol, maxfunEvals - funEvals);
+    else
+      [x, f, Df, step, lineSearchFlag ,lineSearchIters] = ...
+        CurvySearch(x, searchDir, max(min(1,1/norm(Df)),xtol), f, Df'*searchDir,...
+          smoothF, nonsmoothF, descParam, xtol, maxfunEvals - funEvals); 
+    end
     
   % ------------ Select safeguarded forcing term ------------
     
-    [quadf, quadDf] = quadF(x);  %#ok<ASGLU>
-     forcingTerm    = min( 0.5, norm( Df - quadDf ) / norm(Df) );
+    if iter > 1 
+      [quadf, quadDf] = quadF(x);  %#ok<ASGLU>
+       forcingTerm    = min( 0.5, norm( Df - quadDf ) / norm(Df) );
+    end
     
   % ------------ Collect data for display and output ------------
     

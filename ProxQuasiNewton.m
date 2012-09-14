@@ -124,7 +124,7 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
   
   if display > 0  
     fprintf(' %s\n',repmat('=',1,64));
-    fprintf('               ProxNewton  v.%s (%s)\n', REVISION, DATE);
+    fprintf('             ProxQuasiNewton  v.%s (%s)\n', REVISION, DATE);
     fprintf(' %s\n',repmat('=',1,64));
     fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
       '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality');
@@ -212,7 +212,7 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
   % ------------ Solve subproblem for a search direction ------------
     
     if iter > 1 
-      quadF = @(z) smooth_quad(Hf, Df, z-x);
+      quadF = @(z) smooth_quad(Hf, Df, f, z-x);
       
       switch subMethod
         

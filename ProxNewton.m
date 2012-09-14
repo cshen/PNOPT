@@ -123,9 +123,9 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
 % ------------ Evaluate objective function at starting x ------------
   
-  [f, Df, Hf] = smoothF(x);
+  [fsmooth, Df, Hf] = smoothF(x);
    h = nonsmoothF(x);
-   f = f + h;
+   f = fsmooth + h;
   
 % ------------ Start collecting data for display and output ------------
   
@@ -159,7 +159,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
     
   % ------------ Solve subproblem for a search direction ------------
     
-    quadF = @(z) smooth_quad(Hf, Df, z-x);
+    quadF = @(z) smooth_quad(Hf, Df, f, z-x);
 
     switch subMethod
 

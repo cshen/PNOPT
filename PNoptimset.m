@@ -9,12 +9,11 @@ function options = PNoptimset(varargin)
 %   parameter names and their possible values.
 %
 %   $PNoptimset.m $
-%   $Revision: 0.4.2 $  $Date: 2012/07/15 $
+%   $Revision: 0.5.0 $  $Date: 2012/07/15 $
 % 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNOPT:\n');
-    fprintf('     checkOpt : [          logical |      1 ] \n');
     fprintf('    curvParam : [  positive scalar |    0.9 ] \n');    
     fprintf('        debug : [          logical |      0 ] \n');
     fprintf('    descParam : [  positive scalar | 0.0001 ] \n');
@@ -33,7 +32,6 @@ function options = PNoptimset(varargin)
   end
 
   Names = [
-    'checkOpt      '
     'curvParam     '
     'debug         '
     'descParam     '

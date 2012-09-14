@@ -22,7 +22,7 @@ function varargout = ...
     % Evaluate trial point and function value.
     [ht, xt]  = nonsmoothF(x+t*d, t);
     if nargout > 6
-      [ft, Dft, Hft] = smoothF(xt);
+      [fzt, Dft, Hft] = smoothF(xt);
     else
       [ft, Dft] = smoothF(xt);
     end

@@ -1,15 +1,7 @@
 function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 % ProxNewton : Proximal Newton method
 % 
-% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x) starts at x and seeks a 
-%   minimizer of the objective function in composite form. smoothF is a handle
-%   to a function that returns the smooth function value, gradient and Hessian. 
-%   nonsmoothF is a handle to a function that returns the nonsmooth function 
-%   value and proximal mapping. 
-% 
-% [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options) replaces the   
-%   default optimization options with those in options, a structure created 
-%   using the PNoptimset function.
+%   $Revision: 0.5.1 $  $Date: 2012/09/15 $
 % 
   REVISION = '$Revision: 0.5.1$';
   DATE     = '$Date: Sep. 15, 2012$';
@@ -36,7 +28,6 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   display      = options.display;
   maxfunEvals  = options.maxfunEvals;
   maxIter      = options.maxIter;
-  method       = options.method;
   subMethod    = options.subMethod;
   funTol       = options.funTol;
   optTol       = options.optTol;

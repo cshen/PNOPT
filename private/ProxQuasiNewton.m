@@ -1,15 +1,7 @@
 function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
-% ProxQuasiNewton : Proximal quasi-Newton-type methods
+% ProxNewton : Proximal quasi-Newton methods
 % 
-% [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x) starts at x and seeks 
-%   a minimizer of the objective function in composite form. smoothF is a handle
-%   to a function that returns the smooth function value and gradient. nonsmoothF
-%   is a handle to a function that returns the nonsmooth function value and 
-%   proximal mapping. 
-% 
-% [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options) replaces the   
-%   default optimization options with those in options, a structure created 
-%   using the PNoptimset function.
+%   $Revision: 0.5.1 $  $Date: 2012/09/15 $
 % 
   REVISION = '$Revision: 0.5.1$';
   DATE     = '$Date: Sep. 15, 2012$';

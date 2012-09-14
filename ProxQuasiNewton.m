@@ -57,6 +57,11 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
   maxfunEvals  = options.maxfunEvals;
   maxIter      = options.maxIter;
   method       = options.method;
+  subMethod    = options.subMethod;
+  funTol       = options.funTol;
+  optTol       = options.optTol;
+  xtol         = options.xtol;
+  
   switch method
     case 'Bfgs'
       
@@ -65,10 +70,6 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
     otherwise
       error(sprintf('Unrecognized method ''%s''.', method)) %#ok<SPERR>
   end
-  subMethod    = options.subMethod;
-  funTol       = options.funTol;
-  optTol       = options.optTol;
-  xtol         = options.xtol;
   
 % ------------ Set subproblem solver options ------------
   

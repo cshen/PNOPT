@@ -11,8 +11,8 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
 %   default optimization options with those in options, a structure created 
 %   using the PNoptimset function.
 % 
-  REVISION = '$Revision: 0.5.0$';
-  DATE     = '$Date: Sep.  6, 2012$';
+  REVISION = '$Revision: 0.5.1$';
+  DATE     = '$Date: Sep. 15, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   

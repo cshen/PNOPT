@@ -18,17 +18,18 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  PNoptions = PNoptimset(...
-    'debug'       , 0       ,... % debug mode 
-    'descParam'   , 0.0001  ,... % sufficient descent parameter
-    'display'     , 10      ,... % display frequency (<= 0 for no display) 
-    'LbfgsMem'    , 50      ,... % L-BFGS memory
-    'maxfunEvals' , 5000    ,... % max number of function evaluations
-    'maxIter'     , 500     ,... % max number of iterations
-    'subMethod'   , 'Tfocs' ,... % solver for solving subproblems
-    'funTol'      , 1e-9    ,... % stopping tolerance on relative change in the objective function 
-    'optTol'      , 1e-6    ,... % stopping tolerance on optimality condition
-    'xtol'        , 1e-9     ... % stopping tolerance on solution
+  PNoptions = PNoptimset(     ...
+    'debug'       , 0        ,... % debug mode 
+    'descParam'   , 0.0001   ,... % sufficient descent parameter
+    'display'     , 10       ,... % display frequency (<= 0 for no display) 
+    'LbfgsMem'    , 50       ,... % L-BFGS memory
+    'maxfunEvals' , 5000     ,... % max number of function evaluations
+    'maxIter'     , 500      ,... % max number of iterations
+    'method'      , 'Newton' ,... % use proximal Newton's method
+    'subMethod'   , 'Tfocs'  ,... % solver for solving subproblems
+    'funTol'      , 1e-9     ,... % stopping tolerance on relative change in the objective function 
+    'optTol'      , 1e-6     ,... % stopping tolerance on optimality condition
+    'xtol'        , 1e-9      ... % stopping tolerance on solution
     );
   
   SparsaOptions = PNoptimset(...
@@ -55,10 +56,15 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   display      = options.display;
   maxfunEvals  = options.maxfunEvals;
   maxIter      = options.maxIter;
+  method       = options.method;
   subMethod    = options.subMethod;
   funTol       = options.funTol;
   optTol       = options.optTol;
   xtol         = options.xtol;
+  
+  if ~strcmp(method,'Newton')
+    error(sprintf('Unrecognized method ''%s''.', method)) %#ok<SPERR>
+  end
   
 % ------------ Set subproblem solver options ------------
   

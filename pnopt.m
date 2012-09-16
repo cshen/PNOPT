@@ -9,7 +9,7 @@ function [x, f, output] = pnopt(smoothF, nonsmoothF, x, options)
 % 
 % [x, f, output] = pnopt(smoothF, nonsmoothF, x, options) replaces the default
 %   optimization options with those in options, a structure created using the
-%   PNoptimset function.
+%   pnopt_optimset function.
 % 
   
 % ============ Process options ============

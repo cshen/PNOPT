@@ -1,12 +1,12 @@
-function [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options)
-% Sparsa : Structured reconstruction by separable approximation
+function [x, f, output] = sparsa(smoothF, nonsmoothF, x, options)
+% sparsa : Structured reconstruction by separable approximation
 % 
-% [x, f, output] = Sparsa(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
+% [x, f, output] = sparsa(smoothF, nonsmoothF, x) starts at x and seeks a minimizer
 %   of the objective function in composite form. smoothF is a handle to a function
 %   that returns the smooth function value and gradient. nonsmoothF is a handle 
 %   to a function that returns the nonsmooth function value and proximal mapping.   
 % 
-% [x, f, output] = Sparsa(smoothF, nonsmoothF, x, options) replaces the default 
+% [x, f, output] = sparsa(smoothF, nonsmoothF, x, options) replaces the default 
 %   optimization options with those in options, a structure created using the 
 %   PNoptimset function.
 % 

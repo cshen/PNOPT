@@ -42,7 +42,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
       end
     case 'Tfocs'
       if isfield(options,'TfocsOpts') && ~isempty(options.TfocsOpts)
-        TfocsOpts = mergestruct(TfocsOpts, options.TfocsOpts);
+        TfocsOpts = MergeStruct(TfocsOpts, options.TfocsOpts);
       end
            
       if debug

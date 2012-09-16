@@ -6,7 +6,7 @@ function options = pnopt_optimset(varargin)
 %   values are used for parameters that are not specified.
 %   
 % pnopt_optimset with no input arguments and no output arguments displays all 
-%   parameter names and their possible values.
+%   parameter names and their default values.
 %
 %   $pnopt_optimset.m $
 %   $Revision: 0.5.1 $  $Date: 2012/09/15 $

@@ -8,7 +8,7 @@ function [x, f, output] = pnopt(smoothF, nonsmoothF, x, options)
 %   proximal mapping. 
 % 
 % [x, f, output] = pnopt(smoothF, nonsmoothF, x, options) replaces the default
-%   optimization options with those in options, a structure created using the
+%   optimization parameters with those in options, a structure created using the
 %   pnopt_optimset function.
 % 
   

@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>PNOPT by yuekai</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>PNOPT</h1>
+        <p>Proximal Newton OPTimizer</p>
+
+        <p class="view"><a href="https://github.com/yuekai/PNOPT">View the Project on GitHub <small>yuekai/PNOPT</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/yuekai/PNOPT/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/yuekai/PNOPT/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/yuekai/PNOPT">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p>PNOPT (pronounced <em>pee-en-opt</em>) is a MATLAB package that uses proximal Newton-type methods to solve convex optimization problems in composite form. For the details, please refer to <a href="http://arxiv.org/abs/1206.1623">the PNOPT paper</a>. </p>
+
+<h2>Installation</h2>
+
+<p>Unpack the archive and add the <code>yuekai-PNOPT-xxxxxxx</code> directory to your MATLAB search path, <em>e.g.</em> </p>
+
+<pre><code>addpath /home/yuekai/matlab/yuekai-PNOPT-xxxxxxx/
+</code></pre>
+
+<h2>Usage</h2>
+
+<p>PNOPT shares a similar interface with <a href="http://tfocs.stanford.edu/">TFOCS</a>, a popular MATLAB package for solving convex optimization problems in composite form:</p>
+
+<pre><code>[x, f, output] = pnopt(smoothF, nonsmoothF, x0, options);
+</code></pre>
+
+<p>The required input arguments are:</p>
+
+<ul>
+<li>
+<code>smoothF</code>: a smooth function</li>
+<li>
+<code>nonsmoothF</code>: a nonsmooth function </li>
+<li>
+<code>x0</code>: a starting point for the solver</li>
+</ul><p>The user can also supply an <code>options</code> structure created using the <code>pnopt_optimset</code> function to customize the behavior of PNOPT. Calling <code>pnopt_optimset</code> with no inputs lists available options and their default values.</p>
+
+<p>PNOPT returns:</p>
+
+<ul>
+<li>
+<code>x</code>: an optimal solution</li>
+<li>
+<code>f</code>: the optimal value</li>
+<li>
+<code>output</code>: a structure containing information collected during the execution of PNOPT.</li>
+</ul><h3>Creating the smooth and nonsmooth functions</h3>
+
+<p>PNOPT is compatible with the function generators included with TFOCS so the easiest method to create smooth and nonsmooth functions is to use these function generators. For details, please refer to section 3 of <a href="http://tfocs.stanford.edu/tfocs_userguide.pdf">the TFOCS user guide</a>.</p>
+
+<p>If you create your own smooth or nonsmooth function, </p>
+
+<ul>
+<li>
+<code>smoothF(x)</code> should return the function value and gradient at <code>x</code>, <em>i.e.</em> <code>[fx, gradx] = smoothF(x)</code>,</li>
+<li>
+<code>nonsmoothF(x)</code> should return function value at <code>x</code>, <em>i.e.</em><code>fx = nonsmoothF(x)</code>,</li>
+<li>
+<code>nonsmoothF(x,t)</code> should return the proximal point <code>y</code> and the function value at <code>y</code>, <em>i.e.</em><code>[fy, y] = smoothF(x,t)</code>.</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/yuekai">yuekai</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>

@@ -14,7 +14,7 @@ function [x, f, output] = pnopt(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  PNoptions = PNoptimset(...
+  PNoptions = pnopt_optimset(...
     'debug'       , 0       ,... % debug mode 
     'descParam'   , 0.0001  ,... % sufficient descent parameter
     'display'     , 10      ,... % display frequency (<= 0 for no display) 
@@ -29,9 +29,9 @@ function [x, f, output] = pnopt(smoothF, nonsmoothF, x, options)
     );
   
   if nargin > 3
-    options = PNoptimset(PNoptions, options);
+    options = pnopt_optimset(PNoptions, options);
   else
-    options = PNoptions;
+    options = pnopt_options;
   end
   
   method = options.method;

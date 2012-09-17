@@ -10,7 +10,7 @@ function [x, f, output] = sparsa(smoothF, nonsmoothF, x, options)
   
 % ============ Parse options ============
   
-  SparsaOptions = PNoptimset(...
+  SparsaOptions = pnopt_optimset(...
     'checkOpt'      , 1      ,... % Check opt (requires prox evaluation)
     'debug'         , 0      ,... % debug mode 
     'descParam'     , 0.0001 ,... % sufficient descent parameter
@@ -24,7 +24,7 @@ function [x, f, output] = sparsa(smoothF, nonsmoothF, x, options)
     );
   
   if nargin > 3
-    options = PNoptimset(SparsaOptions, options);
+    options = pnopt_optimset(SparsaOptions, options);
   else
     options = SparsaOptions;
   end

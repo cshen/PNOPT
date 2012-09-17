@@ -10,7 +10,7 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  SparsaOptions = PNoptimset(...
+  SparsaOptions = pnopt_optimset(...
     'display'     , 0    ,...
     'maxfunEvals' , 5000 ,...
     'maxIter'     , 500   ...
@@ -50,7 +50,7 @@ function [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options)
       end
     case 'Tfocs'
       if isfield(options,'TfocsOpts') && ~isempty(options.TfocsOpts)
-        TfocsOpts = MergeStruct(TfocsOpts, options.TfocsOpts);
+        TfocsOpts = mergestruct(TfocsOpts, options.TfocsOpts);
       end
            
       if debug

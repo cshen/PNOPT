@@ -1,2 +1,6 @@
+# Github pages #
+gh-pages/
+
+# MATLAB autosave files
 *.asv
 *.m~

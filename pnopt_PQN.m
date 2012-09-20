@@ -74,9 +74,9 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
   MSG_MAXITER = 'Max number of iterations reached.';
   MSG_MAXFEV  = 'Max number of function evaluations reached.';
   
-  iter      = 0; 
-  loop      = 1;
-  forc_term = 0.5;
+  iter         = 0; 
+  loop         = 1;
+  forcing_term = 0.5;
   
   Trace.f_x    = zeros( maxIter + 1, 1 );
   Trace.funEv  = zeros( maxIter + 1, 1 );
@@ -191,7 +191,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
         % SpaRSA
         case 'Sparsa'
           SparsaOpts = pnopt_optimset( SparsaOpts ,...
-            'optTol', max( 0.5 * optTol, forc_term * opt ) ...
+            'optTol', max( 0.5 * optTol, forcing_term * opt ) ...
             );  
           
           [ x_prox, ~, SparsaOut ] = ...
@@ -210,7 +210,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
         % TFOCS 
         case 'Tfocs'
           TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
-            max( 0.5*optTol, forc_term*opt ) );
+            max( 0.5*optTol, forcing_term*opt ) );
 
           [ x_prox, TfocsOut ] = ...
             tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
@@ -274,7 +274,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
     
     if iter > 1 
       [ q_x, quad_Df_x ] = quadF(x);  %#ok<ASGLU>
-      forc_term     = min( 0.5, norm( Df_x - quad_Df_x ) / norm( Df_x ) );
+        forcing_term     = min( 0.5, norm( Df_x - quad_Df_x ) / norm( Df_x ) );
     end
     
   % ------------ Collect data for display and output ------------
@@ -290,7 +290,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
     Trace.opt(iter+1)    = opt;
     
     if debug
-      Trace.forc_term(iter)       = forc_term;
+      Trace.forc_term(iter)       = forcing_term;
       Trace.normDx(iter)          = norm(Dx);
       Trace.backtrack_flag(iter)  = backtrack_flag;
       Trace.backtrack_iters(iter) = backtrack_iters;

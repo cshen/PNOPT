@@ -14,7 +14,7 @@ function options = pnopt_optimset(varargin)
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNOPT:\n');
-    fprintf('     curvParam : [  positive scalar |    0.9 ] \n');    
+    fprintf('    curv_param : [  positive scalar |    0.9 ] \n');    
     fprintf('         debug : [          logical |      0 ] \n');
     fprintf('    desc_param : [  positive scalar | 0.0001 ] \n');
     fprintf('       display : [ positive integer |     10 ] \n');
@@ -32,7 +32,7 @@ function options = pnopt_optimset(varargin)
   end
 
   Names = [
-    'curvParam     '
+    'curv_param    '
     'debug         '
     'desc_param    '
     'display       '

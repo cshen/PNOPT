@@ -5,7 +5,7 @@ function stop = tfocs_stop( x, nonsmoothF, optTol )
 % 
   global quad_Df_x quad_opt
   
-  [~, x_prox ] = nonsmoothF( x - quad_Df_x ,1);
-     quad_opt  = norm( x_prox - x ,'inf');
-     stop     = quad_opt <= optTol;
+  [ ~, x_prox ] = nonsmoothF( x - quad_Df_x ,1);
+    quad_opt    = norm( x_prox - x ,'inf');
+    stop        = quad_opt <= optTol;
   

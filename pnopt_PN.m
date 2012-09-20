@@ -97,15 +97,15 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
 % ------------ Evaluate objective function at starting x ------------
   
   [ f_x, Df_x, Hf_x ] = smoothF( x );
-  h_x = nonsmoothF( x );
-  f_x = f_x + h_x;
+    h_x               = nonsmoothF( x );
+    f_x               = f_x + h_x;
   
 % ------------ Start collecting data for display and output ------------
   
-  funEv  = 1;
-  proxEv = 0;
-  [~, x_prox ] = nonsmoothF( x - Df_x, 1 );
-  opt          = norm( x_prox - x, 'inf' );
+    funEv       = 1;
+    proxEv      = 0;
+  [ ~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+    opt         = norm( x_prox - x, 'inf' );
   
   Trace.f_x(1)    = f_x;
   Trace.funEv(1)  = funEv;
@@ -203,14 +203,14 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
   % ------------ Select safeguarded forcing term ------------
     
     [ quadf, quad_Df_x ] = quadF(x);  %#ok<ASGLU>
-    forc_term       = min( 0.5, norm( Df_x - quad_Df_x ) / norm( Df_x ) );
+      forc_term          = min( 0.5, norm( Df_x - quad_Df_x ) / norm( Df_x ) );
     
   % ------------ Collect data for display and output ------------
     
-     funEv       =  funEv + backtrack_iters ;
-    proxEv       = proxEv + backtrack_iters + quad_proxEv;
-    [~, x_prox ] = nonsmoothF( x - Df_x, 1 );
-         opt     = norm( x_prox - x, 'inf' );
+      funEv       =  funEv + backtrack_iters ;
+      proxEv      = proxEv + backtrack_iters + quad_proxEv;
+    [ ~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+      opt         = norm( x_prox - x, 'inf' );
     
     Trace.f_x(iter+1)    = f_x;
     Trace.funEv(iter+1)  = funEv;

@@ -40,7 +40,7 @@
 
 <p>PNOPT shares a similar interface with <a href="http://tfocs.stanford.edu/">TFOCS</a>, a popular MATLAB package for solving convex optimization problems in composite form:</p>
 
-<pre><code>[x, f, output] = pnopt(smoothF, nonsmoothF, x0, options);
+<pre><code>[ x, f, output ] = pnopt( smoothF, nonsmoothF, x0, options );
 </code></pre>
 
 <p>The required input arguments are:</p>
@@ -71,11 +71,11 @@
 
 <ul>
 <li>
-<code>smoothF(x)</code> should return the function value and gradient at <code>x</code>, <em>i.e.</em> <code>[fx, gradx] = smoothF(x)</code>,</li>
+<code>smoothF( x )</code> should return the function value and gradient at <code>x</code>, <em>i.e.</em> <code>[ fx, gradx ] = smoothF( x )</code>,</li>
 <li>
-<code>nonsmoothF(x)</code> should return function value at <code>x</code>, <em>i.e.</em><code>fx = nonsmoothF(x)</code>,</li>
+<code>nonsmoothF(x)</code> should return function value at <code>x</code>, <em>i.e.</em><code>fx = nonsmoothF( x )</code>,</li>
 <li>
-<code>nonsmoothF(x,t)</code> should return the proximal point <code>y</code> and the function value at <code>y</code>, <em>i.e.</em><code>[fy, y] = nonsmoothF(x,t)</code>.</li>
+<code>nonsmoothF( x, t )</code> should return the proximal point <code>y</code> and the function value at <code>y</code>, <em>i.e.</em><code>[ fy, y ] = nonsmoothF( x, t )</code>.</li>
 </ul>
       </section>
       <footer>

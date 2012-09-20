@@ -1,5 +1,5 @@
-function Dx = Lbfgs_Dx(s_old, y_old, de, Df_x) %#codegen
-% Lbfgs_Dx : L-BFGS search direction
+function Dx = pnopt_Lbfgs_Dx( s_old, y_old, de, Df_x ) %#codegen
+% pnopt_LbfgsDx : L-BFGS search direction
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $
 % 

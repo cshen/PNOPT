@@ -173,7 +173,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
               de    = ( y' * y ) / ( y' * s );
             end
           end
-          Hf_x = Lbfgs_prod( sPrev, yPrev, de );
+          Hf_x = pnopt_Lbfgs_prod( sPrev, yPrev, de );
         else 
           sPrev = zeros( length(x), 0 );
           yPrev = zeros( length(x), 0 );

@@ -1,5 +1,5 @@
-function Hx = Lbfgs_prod(s_old, y_old, de) 
-% Lbfgs_prod : Product with L-BFGS Hessian approximation
+function Hf_x = pnopt_Lbfgs_prod( s_old, y_old, de ) 
+% pnopt_Lbfgs_prod : Product with L-BFGS Hessian approximation
 % 
 %   $Revision: 0.1.2 $  $Date: 2012/06/15 $
 % 
@@ -24,5 +24,5 @@ function Hx = Lbfgs_prod(s_old, y_old, de)
   R2   = [- diag( d2 ) diag( 1 ./ d2 ) * L';
           zeros( l )   R'                   ];
   Qty2 = [ y_old, de * s_old ];
-  Hx   = @(x) de * x - Qty2 * ( R2 \ ( R1 \ ( Qty2' * x ) ) );
+  Hf_x = @(x) de * x - Qty2 * ( R2 \ ( R1 \ ( Qty2' * x ) ) );
   

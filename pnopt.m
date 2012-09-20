@@ -40,11 +40,11 @@ function [x, f, output] = pnopt(smoothF, nonsmoothF, x, options)
   
   switch method
     case 'Bfgs'
-      [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options);
+      [x, f, output] = pnopt_PQN(smoothF, nonsmoothF, x, options);
     case 'Lbfgs'
-      [x, f, output] = ProxQuasiNewton(smoothF, nonsmoothF, x, options);
+      [x, f, output] = pnopt_PQN(smoothF, nonsmoothF, x, options);
     case 'Newton'
-      [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options);
+      [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options);
     otherwise
       error(sprintf('Unrecognized method ''%s''.', method)) %#ok<SPERR>
   end

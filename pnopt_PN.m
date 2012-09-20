@@ -1,5 +1,5 @@
-function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
-% ProxNewton : Proximal Newton method
+function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
+% pnopt_PN : Proximal Newton method
 % 
 %   $Revision: 0.5.1 $  $Date: 2012/09/15 $
 % 
@@ -10,7 +10,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  SparsaOptions = pnopt_optimset(...
+  SparsaOpts = pnopt_optimset(...
     'display'     , 0    ,...
     'maxfunEvals' , 5000 ,...
     'maxIter'     , 500   ...
@@ -37,12 +37,12 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
   switch subMethod
     case 'Sparsa'
-      if isfield(options,'SparsaOptions') && ~isempty(options.SparsaOptions)
-        SparsaOptions = PNoptimset(SparsaOptions, options.SparsaOptions);
+      if isfield(options,'SparsaOpts') && ~isempty(options.SparsaOpts)
+        SparsaOpts = PNoptimset(SparsaOpts, options.SparsaOpts);
       end
     case 'Tfocs'
       if isfield(options,'TfocsOpts') && ~isempty(options.TfocsOpts)
-        TfocsOpts = mergestruct(TfocsOpts, options.TfocsOpts);
+        TfocsOpts = merge_struct(TfocsOpts, options.TfocsOpts);
       end
            
       if debug
@@ -87,7 +87,7 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
   
   if display > 0  
     fprintf(' %s\n',repmat('=',1,64));
-    fprintf('               ProxNewton  v.%s (%s)\n', REVISION, DATE);
+    fprintf('                  PNOPT v.%s (%s)\n', REVISION, DATE);
     fprintf(' %s\n',repmat('=',1,64));
     fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
       '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality');
@@ -138,12 +138,12 @@ function [x, f, output] = ProxNewton(smoothF, nonsmoothF, x, options)
 
       % SpaRSA
       case 'Sparsa'
-        SparsaOptions = PNoptimset(SparsaOptions ,...
+        SparsaOpts = PNoptimset(SparsaOpts ,...
           'optTol', max( 0.5*optTol, forcingTerm*opt ) ...
           );  
 
         [xProx, ~, spgOutput] = ...
-          Sparsa(quadF, nonsmoothF, x, SparsaOptions); 
+          Sparsa(quadF, nonsmoothF, x, SparsaOpts); 
 
       % ------------ Collect data from subproblem solve ------------
 

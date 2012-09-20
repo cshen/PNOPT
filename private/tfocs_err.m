@@ -3,8 +3,8 @@ function err = tfocs_err()
 %
 %   $Revision: 0.1.0 $  $Date: 2012/07/10 $
 % 
-  global quadopt
+  global quad_opt
   
-  err = quadopt;
+  err = quad_opt;
   
   

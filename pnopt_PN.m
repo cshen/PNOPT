@@ -1,4 +1,4 @@
-function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
+function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
 % pnopt_PN : Proximal Newton method
 % 
 %   $Revision: 0.5.1 $  $Date: 2012/09/15 $
@@ -11,9 +11,9 @@ function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
 % ============ Process options ============
   
   SparsaOpts = pnopt_optimset(...
-    'display'     , 0    ,...
-    'maxfunEvals' , 5000 ,...
-    'maxIter'     , 500   ...
+    'display'  , 0    ,...
+    'maxfunEv' , 5000 ,...
+    'maxIter'  , 500   ...
     );
   
   TfocsOpts = struct(...
@@ -23,98 +23,98 @@ function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
     'restart'    , -Inf   ...
     );
   
-  debug        = options.debug;
-  descParam    = options.descParam;
-  display      = options.display;
-  maxfunEvals  = options.maxfunEvals;
-  maxIter      = options.maxIter;
-  subMethod    = options.subMethod;
-  funTol       = options.funTol;
-  optTol       = options.optTol;
-  xtol         = options.xtol;
+  debug       = options.debug;
+  desc_param  = options.desc_param;
+  display     = options.display;
+  maxfunEv    = options.maxfunEv;
+  maxIter     = options.maxIter;
+  quad_solver = options.quad_solver;
+  funTol      = options.funTol;
+  optTol      = options.optTol;
+  xtol        = options.xtol;
   
-% ------------ Set subproblem solver options ------------
+% ------------ Set subproblem quad_solver options ------------
   
-  switch subMethod
+  switch quad_solver
     case 'Sparsa'
-      if isfield(options,'SparsaOpts') && ~isempty(options.SparsaOpts)
-        SparsaOpts = PNoptimset(SparsaOpts, options.SparsaOpts);
+      if isfield( options, 'SparsaOpts' ) && ~isempty( options.SparsaOpts )
+        SparsaOpts = pnopt_optimset( SparsaOpts, options.SparsaOpts );
       end
     case 'Tfocs'
-      if isfield(options,'TfocsOpts') && ~isempty(options.TfocsOpts)
-        TfocsOpts = merge_struct(TfocsOpts, options.TfocsOpts);
+      if isfield( options, 'TfocsOpts' ) && ~isempty( options.TfocsOpts )
+        TfocsOpts = merge_struct( TfocsOpts, options.TfocsOpts );
       end
            
       if debug
         TfocsOpts.countOps = 1;
-        TfocsOpts.errFcn   = @(f,x) tfocs_err();
+        TfocsOpts.errFcn   = @(f, x) tfocs_err();
       end
   end
   
 % ============ Initialize variables ============
   
-  FLAG_OPT         = 1;
-  FLAG_XTOL        = 2;
-  FLAG_FUNTOL      = 3;
-  FLAG_MAXITER     = 4;
-  FLAG_MAXFUNEVALS = 5;
-  FLAG_OTHER       = 6;
+  FLAG_OPT     = 1;
+  FLAG_XTOL    = 2;
+  FLAG_FUNTOL  = 3;
+  FLAG_MAXITER = 4;
+  FLAG_MAXFEV  = 5;
+  FLAG_OTHER   = 6;
   
-  MSG_OPT         = 'Optimality below optTol.';
-  MSG_XTOL        = 'Relative change in x below xtol.';
-  MSG_FUNTOL      = 'Relative change in function value below funTol.';
-  MSG_MAXITER     = 'Max number of iterations reached.';
-  MSG_MAXFUNEVALS = 'Max number of function evaluations reached.';
+  MSG_OPT     = 'Optimality below optTol.';
+  MSG_XTOL    = 'Relative change in x below xtol.';
+  MSG_FUNTOL  = 'Relative change in function value below funTol.';
+  MSG_MAXITER = 'Max number of iterations reached.';
+  MSG_MAXFEV  = 'Max number of function evaluations reached.';
   
-  iter        = 0; 
-  loop        = 1;
-  forcingTerm = 0.5;
+  iter      = 0; 
+  loop      = 1;
+  forc_term = 0.5;
   
-  Trace.f         = zeros(maxIter+1,1);
-  Trace.funEvals  = zeros(maxIter+1,1);
-  Trace.proxEvals = zeros(maxIter+1,1);
-  Trace.opt       = zeros(maxIter+1,1);
+  Trace.f_x    = zeros( maxIter+1, 1 );
+  Trace.funEv  = zeros( maxIter+1, 1 );
+  Trace.proxEv = zeros( maxIter+1, 1 );
+  Trace.opt    = zeros( maxIter+1, 1 );
   
   if debug
-    Trace.forcingTerm     = zeros(maxIter,1);
-    Trace.normSearchDir   = zeros(maxIter,1);
-    Trace.lineSearchFlag  = zeros(maxIter,1);
-    Trace.lineSearchIters = zeros(maxIter,1);
-    Trace.subFlags = zeros(maxIter,1);
-    Trace.subIters = zeros(maxIter,1);
-    Trace.subopt   = zeros(maxIter,1);
+    Trace.forc_term       = zeros( maxIter, 1 );
+    Trace.normDx          = zeros( maxIter, 1 );
+    Trace.backtrack_flag  = zeros( maxIter, 1 );
+    Trace.backtrack_iters = zeros( maxIter, 1 );
+    Trace.quad_flags      = zeros( maxIter, 1 );
+    Trace.quad_iters      = zeros( maxIter, 1 );
+    Trace.quad_opt        = zeros( maxIter, 1 );
   end
   
   if display > 0  
-    fprintf(' %s\n',repmat('=',1,64));
-    fprintf('                  PNOPT v.%s (%s)\n', REVISION, DATE);
-    fprintf(' %s\n',repmat('=',1,64));
-    fprintf(' %4s   %6s  %6s  %12s  %12s  %12s \n',...
-      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality');
-    fprintf(' %s\n',repmat('-',1,64));
+    fprintf( ' %s\n', repmat( '=', 1, 64 ) );
+    fprintf( '                  PNOPT v.%s (%s)\n', REVISION, DATE );
+    fprintf( ' %s\n', repmat( '=', 1, 64 ) );
+    fprintf( ' %4s   %6s  %6s  %12s  %12s  %12s \n',...
+      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality' );
+    fprintf( ' %s\n', repmat( '-', 1, 64 ) );
   end
   
 % ------------ Evaluate objective function at starting x ------------
   
-  [fsmooth, Df, Hf] = smoothF(x);
-   h = nonsmoothF(x);
-   f = fsmooth + h;
+  [ f_x, Df_x, Hf_x ] = smoothF( x );
+  h_x = nonsmoothF( x );
+  f_x = f_x + h_x;
   
 % ------------ Start collecting data for display and output ------------
   
-  funEvals  = 1;
-  proxEvals = 0;
-  [~, xProx ] = nonsmoothF( x - Df ,1);
-       opt    = norm( xProx - x ,'inf');
+  funEv  = 1;
+  proxEv = 0;
+  [~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+  opt          = norm( x_prox - x, 'inf' );
   
-  Trace.f(1)         = f;
-  Trace.funEvals(1)  = funEvals;
-  Trace.proxEvals(1) = proxEvals;
-  Trace.opt(1)       = opt; 
+  Trace.f_x(1)    = f_x;
+  Trace.funEv(1)  = funEv;
+  Trace.proxEv(1) = proxEv;
+  Trace.opt(1)    = opt; 
   
   if display > 0
-    fprintf(' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n',...
-      iter, funEvals, proxEvals, '', f, opt);
+    fprintf( ' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n', ...
+      iter, funEv, proxEv, '', f_x, opt );
   end
   
 % ------------ Check if starting x is optimal ------------
@@ -128,108 +128,108 @@ function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
 % ============ Main Loop ============
   
   while loop
-    iter = iter+1; 
+    iter = iter + 1; 
     
   % ------------ Solve subproblem for a search direction ------------
     
-    quadF = @(z) smooth_quad(Hf, Df, f, z-x);
+    quadF = @(z) smooth_quad( Hf_x, Df_x, f_x, z - x );
 
-    switch subMethod
+    switch quad_solver
 
       % SpaRSA
       case 'Sparsa'
-        SparsaOpts = PNoptimset(SparsaOpts ,...
-          'optTol', max( 0.5*optTol, forcingTerm*opt ) ...
+        SparsaOpts = pnopt_optimset( SparsaOpts ,...
+          'optTol', max( 0.5 * optTol, forc_term * opt ) ...
           );  
 
-        [xProx, ~, spgOutput] = ...
-          Sparsa(quadF, nonsmoothF, x, SparsaOpts); 
+        [ x_prox, ~, SparsaOut ] = ...
+          pnopt_sparsa( quadF, nonsmoothF, x, SparsaOpts ); 
 
       % ------------ Collect data from subproblem solve ------------
 
-        subIters     = spgOutput.iters;
-        subProxEvals = spgOutput.proxEvals;
+        quad_iters  = SparsaOut.iters;
+        quad_proxEv = SparsaOut.proxEv;
 
         if debug
-          subFlag = spgOutput.flag;
-          subopt  = spgOutput.opt;
+          quad_flag = SparsaOut.flag;
+          quad_opt  = SparsaOut.opt;
         end
 
       % TFOCS 
       case 'Tfocs'
-        TfocsOpts.stopFcn = @(f,x) tfocs_stop( x, nonsmoothF,...
-          max( 0.5*optTol, forcingTerm*opt ) );
+        TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
+          max( 0.5 * optTol, forc_term * opt ) );
 
-        [xProx, TfocsOut] = ...
-          tfocs(quadF, [], nonsmoothF, x, TfocsOpts);
+        [ x_prox, TfocsOut ] = ...
+          tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
 
-        subIters       = TfocsOut.niter;
-        if isfield(TfocsOpts, 'countOps') && TfocsOpts.countOps
-          subProxEvals = TfocsOut.counts(end,5);
+        quad_iters = TfocsOut.niter;
+        if isfield( TfocsOpts, 'countOps' ) && TfocsOpts.countOps
+          quad_proxEv = TfocsOut.counts(end,5);
         else
-          subProxEvals = TfocsOut.niter;
+          quad_proxEv = TfocsOut.niter;
         end
 
         if debug
           switch TfocsOut.status
             case 'Reached user''s supplied stopping criteria no. 1'
-              subFlag = FLAG_OPT;
-            case {'Step size tolerance reached (||dx||=0)',...
-                  'Step size tolerance reached'           ,...
-                  'Unexpectedly small stepsize'}
-              subFlag = FLAG_XTOL;
+              quad_flag = FLAG_OPT;
+            case { 'Step size tolerance reached (||dx||=0)', ...
+                   'Step size tolerance reached'           , ...
+                   'Unexpectedly small stepsize' }
+              quad_flag = FLAG_XTOL;
             case 'Iteration limit reached'
-              subFlag = FLAG_MAXITER;
+              quad_flag = FLAG_MAXITER;
             case 'Function/operator count limit reached'
-              subFlag = FLAG_MAXFUNEVALS;
+              quad_flag = FLAG_MAXFEV;
             otherwise
-              subFlag = FLAG_OTHER;
+              quad_flag = FLAG_OTHER;
           end
-          subopt = TfocsOut.err(end);
+          quad_opt = TfocsOut.err(end);
         end
     end
-
-    searchDir = xProx - x;
+      
+    Dx = x_prox - x;
     
   % ------------ Conduct line search ------------
     
-    xPrev  = x;
-    fPrev  = f;
+    x_old  = x;
+    f_old  = f_x;
     
-    [x, f, Df, Hf, step, lineSearchFlag ,lineSearchIters] = ...
-      LineSearch(x, searchDir, 1, f, h, Df'*searchDir, smoothF, nonsmoothF,...
-        descParam, xtol, maxfunEvals - funEvals); 
+    [ x, f_x, Df_x, Hf_x, step, backtrack_flag ,backtrack_iters ] = ...
+      pnopt_backtrack( x, Dx, 1, f_x, h_x, Df_x' * Dx, smoothF, nonsmoothF, ...
+        desc_param, xtol, maxfunEv - funEv ); 
     
   % ------------ Select safeguarded forcing term ------------
     
-    [quadf, quadDf] = quadF(x);  %#ok<ASGLU>
-     forcingTerm    = min( 0.5, norm( Df - quadDf ) / norm(Df) );
+    [ quadf, quad_Df_x ] = quadF(x);  %#ok<ASGLU>
+    forc_term       = min( 0.5, norm( Df_x - quad_Df_x ) / norm( Df_x ) );
     
   % ------------ Collect data for display and output ------------
     
-     funEvals =  funEvals + lineSearchIters ;
-    proxEvals = proxEvals + lineSearchIters + subProxEvals;
-    [~, xProx ] = nonsmoothF( x - Df ,1);
-         opt    = norm( xProx - x ,'inf');
+     funEv       =  funEv + backtrack_iters ;
+    proxEv       = proxEv + backtrack_iters + quad_proxEv;
+    [~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+         opt     = norm( x_prox - x, 'inf' );
     
-    Trace.f(iter+1)         = f;
-    Trace.funEvals(iter+1)  = funEvals;
-    Trace.proxEvals(iter+1) = proxEvals;
-    Trace.opt(iter+1)       = opt;
+    Trace.f_x(iter+1)    = f_x;
+    Trace.funEv(iter+1)  = funEv;
+    Trace.proxEv(iter+1) = proxEv;
+    Trace.opt(iter+1)    = opt;
     
     if debug
-      Trace.forcingTerm(iter)     = forcingTerm;
-      Trace.normSearchDir(iter)   = norm(searchDir);
-      Trace.lineSearchFlag(iter)  = lineSearchFlag;
-      Trace.lineSearchIters(iter) = lineSearchIters;
-      Trace.subFlags(iter) = subFlag;
-      Trace.subIters(iter) = subIters;
-      Trace.subopt(iter)   = subopt;
+      Trace.forc_term(iter)       = forc_term;
+      Trace.normDx(iter)          = norm(Dx);
+      Trace.backtrack_flag(iter)  = backtrack_flag;
+      Trace.backtrack_iters(iter) = backtrack_iters;
+      Trace.quad_flags(iter)    = quad_flag;
+      Trace.quad_iters(iter)    = quad_iters;
+      Trace.quad_opt(iter)      = quad_opt;
     end
     
-    if display > 0 && mod(iter,display) == 0
-      fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...  
-        iter, funEvals, proxEvals, step, f, opt);
+    if display > 0 && mod( iter, display ) == 0
+      fprintf( ' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n', ...  
+        iter, funEv, proxEv, step, f_x, opt );
     end
     
   % ------------ Check stopping criteria ------------
@@ -238,11 +238,11 @@ function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
       flag    = FLAG_OPT;
       message = MSG_OPT;
       loop    = 0;
-    elseif norm(x-xPrev,'inf')/max(1,norm(xPrev,'inf')) <= xtol 
+    elseif norm( x - x_old, 'inf' ) / max( 1, norm( x_old, 'inf' ) ) <= xtol 
       flag    = FLAG_XTOL;
       message = MSG_XTOL;
       loop    = 0;
-    elseif abs(fPrev-f)/max(1,abs(fPrev)) <= funTol
+    elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= funTol
       flag    = FLAG_FUNTOL;
       message = MSG_FUNTOL;
       loop    = 0;
@@ -250,50 +250,50 @@ function [x, f, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
       flag    = FLAG_MAXITER;
       message = MSG_MAXITER;
       loop    = 0;
-    elseif funEvals >= maxfunEvals
-      flag    = FLAG_MAXFUNEVALS;
-      message = MSG_MAXFUNEVALS;
+    elseif funEv >= maxfunEv
+      flag    = FLAG_MAXFEV;
+      message = MSG_MAXFEV;
       loop    = 0;
     end
   end
   
 % ============ Cleanup and exit ============
   
-  Trace.f         = Trace.f(1:iter+1);
-  Trace.funEvals  = Trace.funEvals(1:iter+1);
-  Trace.proxEvals = Trace.proxEvals(1:iter+1);
-  Trace.opt       = Trace.opt  (1:iter+1);
+  Trace.f_x    = Trace.f_x(1:iter+1);
+  Trace.funEv  = Trace.funEv(1:iter+1);
+  Trace.proxEv = Trace.proxEv(1:iter+1);
+  Trace.opt    = Trace.opt  (1:iter+1);
   
   if debug
-    Trace.forcingTerm     = Trace.forcingTerm(1:iter);
-    Trace.normSearchDir   = Trace.normSearchDir(1:iter);
-    Trace.lineSearchFlag  = Trace.lineSearchFlag(1:iter);
-    Trace.lineSearchIters = Trace.lineSearchIters(1:iter);
-    Trace.subFlags = Trace.subFlags(1:iter);
-    Trace.subIters = Trace.subIters(1:iter);
-    Trace.subopt   = Trace.subopt(1:iter);
+    Trace.forc_term       = Trace.forc_term(1:iter);
+    Trace.normDx          = Trace.normDx(1:iter);
+    Trace.backtrack_flag  = Trace.backtrack_flag(1:iter);
+    Trace.backtrack_iters = Trace.backtrack_iters(1:iter);
+    Trace.quad_flags      = Trace.quad_flags(1:iter);
+    Trace.quad_iters      = Trace.quad_iters(1:iter);
+    Trace.quad_opt        = Trace.quad_opt(1:iter);
   end
   
-  if display > 0 && mod(iter,display) > 0
-    fprintf(' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n',...
-      iter, funEvals, proxEvals, step, f, opt);
+  if display > 0 && mod( iter, display ) > 0
+    fprintf( ' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n', ...
+      iter, funEv, proxEv, step, f_x, opt );
   end
   
-  output = struct(...
-    'flag'      , flag      ,...
-    'funEvals'  , funEvals  ,...
-    'iters'     , iter      ,...
-    'opt'       , opt       ,...
-    'options'   , options   ,...
-    'proxEvals' , proxEvals ,...
-    'Trace'     , Trace      ...
+  output = struct( ...
+    'flag'    , flag      ,...
+    'funEv'   , funEv  ,...
+    'iters'   , iter      ,...
+    'opt'     , opt       ,...
+    'options' , options   ,...
+    'proxEv'  , proxEv ,...
+    'Trace'   , Trace      ...
     );
   
   if display > 0
-    fprintf(' %s\n',repmat('-',1,64));
-    fprintf(' %s\n',message)
-    fprintf(' %s\n',repmat('-',1,64));
+    fprintf( ' %s\n', repmat( '-', 1, 64 ) );
+    fprintf( ' %s\n', message )
+    fprintf( ' %s\n', repmat( '-', 1, 64 ) );
   end
   
-  clear global quadDf quadopt
+  clear global quad_Df_x quad_opt
   

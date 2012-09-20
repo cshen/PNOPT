@@ -14,19 +14,19 @@ function options = pnopt_optimset(varargin)
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNOPT:\n');
-    fprintf('    curvParam : [  positive scalar |    0.9 ] \n');    
-    fprintf('        debug : [          logical |      0 ] \n');
-    fprintf('    descParam : [  positive scalar | 0.0001 ] \n');
-    fprintf('      display : [ positive integer |     10 ] \n');
-    fprintf('     LbfgsMem : [ positive integer |     50 ] \n');
-    fprintf('lineSearchMem : [ positive integer |     10 ] \n');
-    fprintf('  maxfunEvals : [ positive integer |   5000 ] \n');
-    fprintf('      maxIter : [ positive integer |    500 ] \n');
-    fprintf('       method : [           string |  Lbfgs ] \n');
-    fprintf('    subMethod : [           string |  Tfocs ] \n');
-    fprintf('       funTol : [  positive scalar |   1e-9 ] \n');
-    fprintf('       optTol : [  positive scalar |   1e-6 ] \n');
-    fprintf('         xtol : [  positive scalar |   1e-9 ] \n');
+    fprintf('     curvParam : [  positive scalar |    0.9 ] \n');    
+    fprintf('         debug : [          logical |      0 ] \n');
+    fprintf('    desc_param : [  positive scalar | 0.0001 ] \n');
+    fprintf('       display : [ positive integer |     10 ] \n');
+    fprintf('     Lbfgs_mem : [ positive integer |     50 ] \n');
+    fprintf(' backtrack_mem : [ positive integer |     10 ] \n');
+    fprintf('      maxfunEv : [ positive integer |   5000 ] \n');
+    fprintf('       maxIter : [ positive integer |    500 ] \n');
+    fprintf('        method : [           string |  Lbfgs ] \n');
+    fprintf('   quad_solver : [           string |  Tfocs ] \n');
+    fprintf('        funTol : [  positive scalar |   1e-9 ] \n');
+    fprintf('        optTol : [  positive scalar |   1e-6 ] \n');
+    fprintf('          xtol : [  positive scalar |   1e-9 ] \n');
     fprintf('\n');
     return;
   end
@@ -34,15 +34,15 @@ function options = pnopt_optimset(varargin)
   Names = [
     'curvParam     '
     'debug         '
-    'descParam     '
+    'desc_param    '
     'display       '
-    'LbfgsMem      '
-    'lineSearchMem '
-    'maxfunEvals   '
+    'Lbfgs_mem     '
+    'backtrack_mem '
+    'maxfunEv      '
     'maxIter       '
     'method        '
-    'SparsaOptions '
-    'subMethod     '
+    'SparsaOpts    '
+    'quad_solver   '
     'TfocsOpts     '
     'funTol        '
     'optTol        '

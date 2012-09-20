@@ -1,6 +1,6 @@
-function varargout = line_search( x, d, t, f_x, h_x, Df_Dx, smoothF, ...
+function varargout = pnopt_backtrack( x, d, t, f_x, h_x, Df_Dx, smoothF, ...
   nonsmoothF, descParam, xtol, maxIter )
-% line_search : Backtracking line search for step that satisfies a sufficient 
+% pnopt_backtrack : Backtracking line search for step that satisfies a sufficient 
 %   descent condition.
 % 
 %   $Revision: 0.1.0 $  $Date: 2012/05/30 $

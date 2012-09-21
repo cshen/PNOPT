@@ -1,4 +1,4 @@
-function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
+function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
 % pnopt_PQN : Proximal quasi-Newton methods
 % 
 %   $Revision: 0.5.1 $  $Date: 2012/09/15 $
@@ -10,13 +10,13 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  SparsaOpts = pnopt_optimset(...
+  sparsaOpts = pnopt_optimset(...
     'display'  , 0    ,...
     'maxfunEv' , 5000 ,...
     'maxIter'  , 500   ...
     );
   
-  TfocsOpts = struct(...
+  tfocsOpts = struct(...
     'alg'        , 'N83' ,...
     'maxIts'     , 500   ,...
     'printEvery' , 0     ,...
@@ -45,17 +45,17 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
   
   switch quad_solver
     case 'Sparsa'
-      if isfield( options, 'SparsaOpts' ) && ~isempty( options.SparsaOpts )
-        SparsaOpts = pnopt_optimset( SparsaOpts, options.SparsaOpts );
+      if isfield( options, 'sparsaOpts' ) && ~isempty( options.sparsaOpts )
+        sparsaOpts = pnopt_optimset( sparsaOpts, options.sparsaOpts );
       end
     case 'Tfocs'
-      if isfield( options, 'TfocsOpts' ) && ~isempty( options.TfocsOpts )
-        TfocsOpts = merge_struct( TfocsOpts, options.TfocsOpts );
+      if isfield( options, 'tfocsOpts' ) && ~isempty( options.tfocsOpts )
+        tfocsOpts = merge_struct( tfocsOpts, options.tfocsOpts );
       end
            
       if debug
-        TfocsOpts.countOps = 1;
-        TfocsOpts.errFcn   = @(f, x) tfocs_err();
+        tfocsOpts.countOps = 1;
+        tfocsOpts.errFcn   = @(f, x) tfocs_err();
       end
   end
   
@@ -190,40 +190,40 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
         
         % SpaRSA
         case 'Sparsa'
-          SparsaOpts = pnopt_optimset( SparsaOpts ,...
+          sparsaOpts = pnopt_optimset( sparsaOpts ,...
             'optTol', max( 0.5 * optTol, forcing_term * opt ) ...
             );  
           
-          [ x_prox, ~, SparsaOut ] = ...
-            pnopt_parsa( quadF, nonsmoothF, x, SparsaOpts ); 
+          [ x_prox, ~, sparsaOut ] = ...
+            pnopt_parsa( quadF, nonsmoothF, x, sparsaOpts ); 
 
         % ------------ Collect data from subproblem solve ------------
           
-          quad_iters  = SparsaOut.iters;
-          quad_proxEv = SparsaOut.proxEv;
+          quad_iters  = sparsaOut.iters;
+          quad_proxEv = sparsaOut.proxEv;
           
           if debug
-            quad_flag = SparsaOut.flag;
-            quad_opt  = SparsaOut.opt;
+            quad_flag = sparsaOut.flag;
+            quad_opt  = sparsaOut.opt;
           end
         
         % TFOCS 
         case 'Tfocs'
-          TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
+          tfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
             max( 0.5*optTol, forcing_term*opt ) );
 
-          [ x_prox, TfocsOut ] = ...
-            tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
+          [ x_prox, tfocsOut ] = ...
+            tfocs( quadF, [], nonsmoothF, x, tfocsOpts );
         
-          quad_iters = TfocsOut.niter;
-          if isfield( TfocsOpts, 'countOps' ) && TfocsOpts.countOps
-            quad_proxEv = TfocsOut.counts(end,5);
+          quad_iters = tfocsOut.niter;
+          if isfield( tfocsOpts, 'countOps' ) && tfocsOpts.countOps
+            quad_proxEv = tfocsOut.counts(end,5);
           else
-            quad_proxEv = TfocsOut.niter;
+            quad_proxEv = tfocsOut.niter;
           end
           
           if debug
-            switch TfocsOut.status
+            switch tfocsOut.status
               case 'Reached user''s supplied stopping criteria no. 1'
                 quad_flag = FLAG_OPT;
               case { 'Step size tolerance reached (||dx||=0)', ...
@@ -237,7 +237,7 @@ function [x, f_x, output] = pnopt_PQN(smoothF, nonsmoothF, x, options)
               otherwise
                 quad_flag = FLAG_OTHER;
             end
-            quad_opt = TfocsOut.err(end);
+            quad_opt = tfocsOut.err(end);
           end
       end
       

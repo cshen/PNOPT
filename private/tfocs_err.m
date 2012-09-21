@@ -7,4 +7,3 @@ function err = tfocs_err()
   
   err = quad_opt;
   
-  

@@ -1,7 +1,7 @@
-function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
+function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
 % pnopt_PN : Proximal Newton method
 % 
-%   $Revision: 0.5.1 $  $Date: 2012/09/15 $
+%   $ Revision: 0.5.1 $  $Date: 2012/09/15 $
 % 
   REVISION = '$Revision: 0.5.1$';
   DATE     = '$Date: Sep. 15, 2012$';
@@ -10,7 +10,7 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
   
 % ============ Process options ============
   
-  SparsaOpts = pnopt_optimset(...
+  sparsaOpts = pnopt_optimset(...
     'display'  , 0    ,...
     'maxfunEv' , 5000 ,...
     'maxIter'  , 500   ...
@@ -37,8 +37,8 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
   
   switch quad_solver
     case 'Sparsa'
-      if isfield( options, 'SparsaOpts' ) && ~isempty( options.SparsaOpts )
-        SparsaOpts = pnopt_optimset( SparsaOpts, options.SparsaOpts );
+      if isfield( options, 'sparsaOpts' ) && ~isempty( options.sparsaOpts )
+        sparsaOpts = pnopt_optimset( sparsaOpts, options.sparsaOpts );
       end
     case 'Tfocs'
       if isfield( options, 'TfocsOpts' ) && ~isempty( options.TfocsOpts )
@@ -138,21 +138,21 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
 
       % SpaRSA
       case 'Sparsa'
-        SparsaOpts = pnopt_optimset( SparsaOpts ,...
+        sparsaOpts = pnopt_optimset( sparsaOpts ,...
           'optTol', max( 0.5 * optTol, forcing_term * opt ) ...
           );  
 
-        [ x_prox, ~, SparsaOut ] = ...
-          pnopt_sparsa( quadF, nonsmoothF, x, SparsaOpts ); 
+        [ x_prox, ~, sparsaOut ] = ...
+          pnopt_sparsa( quadF, nonsmoothF, x, sparsaOpts ); 
 
       % ------------ Collect data from subproblem solve ------------
 
-        quad_iters  = SparsaOut.iters;
-        quad_proxEv = SparsaOut.proxEv;
+        quad_iters  = sparsaOut.iters;
+        quad_proxEv = sparsaOut.proxEv;
 
         if debug
-          quad_flag = SparsaOut.flag;
-          quad_opt  = SparsaOut.opt;
+          quad_flag = sparsaOut.flag;
+          quad_opt  = sparsaOut.opt;
         end
 
       % TFOCS 
@@ -160,18 +160,18 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
         TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
           max( 0.5 * optTol, forcing_term * opt ) );
 
-        [ x_prox, TfocsOut ] = ...
+        [ x_prox, tfocsOut ] = ...
           tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
 
-        quad_iters = TfocsOut.niter;
+        quad_iters = tfocsOut.niter;
         if isfield( TfocsOpts, 'countOps' ) && TfocsOpts.countOps
-          quad_proxEv = TfocsOut.counts(end,5);
+          quad_proxEv = tfocsOut.counts(end,5);
         else
-          quad_proxEv = TfocsOut.niter;
+          quad_proxEv = tfocsOut.niter;
         end
 
         if debug
-          switch TfocsOut.status
+          switch tfocsOut.status
             case 'Reached user''s supplied stopping criteria no. 1'
               quad_flag = FLAG_OPT;
             case { 'Step size tolerance reached (||dx||=0)', ...
@@ -185,7 +185,7 @@ function [x, f_x, output] = pnopt_PN(smoothF, nonsmoothF, x, options)
             otherwise
               quad_flag = FLAG_OTHER;
           end
-          quad_opt = TfocsOut.err(end);
+          quad_opt = tfocsOut.err(end);
         end
     end
       

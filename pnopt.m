@@ -1,13 +1,13 @@
 function [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options )
 % pnopt : Proximal Newton-type methods
 % 
-% [x, f, output] = pnopt(smoothF, nonsmoothF, x) starts at x and seeks a 
+% [ x, f, output ] = pnopt( smoothF, nonsmoothF, x ) starts at x and seeks a 
 %   minimizer of the objective function in composite form. smoothF is a handle
 %   to a function that returns the smooth function value and gradient. nonsmoothF
 %   is a handle to a function that returns the nonsmooth function value and 
 %   proximal mapping. 
-% 
-% [x, f, output] = pnopt(smoothF, nonsmoothF, x, options) replaces the default
+%  
+% [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options ) replaces the default
 %   optimization parameters with those in options, a structure created using the
 %   pnopt_optimset function.
 % 

@@ -1,15 +1,15 @@
-function options = pnopt_optimset(varargin)
+function options = pnopt_optimset( varargin )
 % pnopt_optimset : Set options for PNOPT
 %
-% options = pnopt_optimset('param1',val1,'param2',val2,...) creates an options
+% options = pnopt_optimset( 'param1', val1, 'param2', val2,... ) creates an options
 %   structure in which the named parameters have the specified values. Default
 %   values are used for parameters that are not specified.
 %   
 % pnopt_optimset with no input arguments and no output arguments displays all 
 %   parameter names and their default values.
 %
-%   $pnopt_optimset.m $
-%   $Revision: 0.5.1 $  $Date: 2012/09/15 $
+%   $ pnopt_optimset.m $
+%   $ Revision: 0.5.1 $  $Date: 2012/09/15 $
 % 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0

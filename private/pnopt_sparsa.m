@@ -1,4 +1,4 @@
-function [x, f_x, output] = pnopt_sparsa(smoothF, nonsmoothF, x, options)
+function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
 % pnopt_sparsa : Structured reconstruction by separable approximation
 % 
 %   $Revision: 0.5.1 $  $Date: 2012/09/15 $
@@ -191,7 +191,7 @@ function [x, f_x, output] = pnopt_sparsa(smoothF, nonsmoothF, x, options)
   Trace.f_x    = Trace.f_x(1:iter+1);
   Trace.funEv  = Trace.funEv(1:iter+1);
   Trace.proxEv = Trace.proxEv(1:iter+1);
-  Trace.opt    = Trace.opt  (1:iter+1);
+  Trace.opt    = Trace.opt(1:iter+1);
   
   if debug
     Trace.normDx          = Trace.normDx(1:iter);

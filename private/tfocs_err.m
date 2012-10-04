@@ -1,9 +1,9 @@
 function err = tfocs_err() 
 %  tfocs_err : TFOCS error measurement
 %
-%   $Revision: 0.1.0 $  $Date: 2012/07/10 $
+%   $Revision: 0.1.0 $  $Date: 2012/07/07 $
 % 
-  global quad_opt
+  global subprob_optim
   
-  err = quad_opt;
+  err = subprob_optim;
   

@@ -1,7 +1,7 @@
 function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
 % pnopt_sparsa : Structured reconstruction by separable approximation
 % 
-%   $Revision: 0.5.1 $  $Date: 2012/09/15 $
+%   $Revision: 0.6.4 $  $Date: 2012/09/30 $
 % 
   REVISION = '$Revision: 0.5.1$';
   DATE     = '$Date: Sep. 15, 2012$';
@@ -17,8 +17,8 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
     'backtrack_mem' , 10     ,... % number of previous function values to save
     'maxfunEv'      , 50000  ,... % max number of function evaluations
     'maxIter'       , 5000   ,... % max number of iterations
-    'funTol'        , 1e-9   ,... % stopping tolerance on objective function 
-    'optTol'        , 1e-6   ,... % stopping tolerance on opt
+    'ftol'          , 1e-9   ,... % stopping tolerance on objective function 
+    'optim_tol'     , 1e-6   ,... % stopping tolerance on opt
     'xtol'          , 1e-9    ... % stopping tolerance on solution
     );
   
@@ -34,23 +34,23 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   backtrack_mem = options.backtrack_mem;
   maxfunEv      = options.maxfunEv;
   maxIter       = options.maxIter;
-  funTol        = options.funTol;
-  optTol        = options.optTol;
+  ftol          = options.ftol;
+  optim_tol     = options.optim_tol;
   xtol          = options.xtol;
   
 % ============ Initialize variables ============
   
-  FLAG_OPT      = 1;
+  FLAG_OPTIM    = 1;
   FLAG_XTOL     = 2;
-  FLAG_FUNTOL   = 3;
+  FLAG_FTOL     = 3;
   FLAG_MAXITER  = 4;
   FLAG_MAXFUNEV = 5;
   
-  MSG_OPT      = 'Optimality below optTol.';
-  MSG_XTOL     = 'Relative change in x below xtol.';
-  MSG_FUNTOL   = 'Relative change in function value below funTol.';
-  MSG_MAXITER  = 'Max number of iterations reached.';
-  MSG_MAXFUNEV = 'Max number of function evaluations reached.';
+  MESSAGE_OPTIM    = 'Optimality below optim_tol.';
+  MESSAGE_XTOL     = 'Relative change in x below xtol.';
+  MESSAGE_FTOL   = 'Relative change in function value below ftol.';
+  MESSAGE_MAXITER  = 'Max number of iterations reached.';
+  MESSAGE_MAXFUNEV = 'Max number of function evaluations reached.';
   
   iter = 0; 
   loop = 1;
@@ -58,7 +58,7 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   Trace.f_x    = zeros( maxIter + 1, 1 );
   Trace.funEv  = zeros( maxIter + 1, 1 );
   Trace.proxEv = zeros( maxIter + 1, 1 );
-  Trace.opt    = zeros( maxIter + 1, 1 );
+  Trace.optim  = zeros( maxIter + 1, 1 );
   
   if debug
     Trace.normDx          = zeros( maxIter, 1 );
@@ -86,23 +86,23 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
     funEv       = 1;
     proxEv      = 0;
   [ ~, x_prox ] = nonsmoothF( x - Df_x, 1 );
-    opt         = norm( x_prox - x, 'inf' );
+    optim       = norm( x_prox - x, 'inf' );
   
   Trace.f_x(1)    = f_x;
   Trace.funEv(1)  = funEv;
   Trace.proxEv(1) = proxEv;
-  Trace.opt(1)    = opt; 
+  Trace.optim(1)    = optim; 
   
   if display > 0    
     fprintf( ' %4d | %6d  %6d  %12s  %12.4e  %12.4e\n', ...
-      iter, funEv, proxEv, '', f_x, opt );
+      iter, funEv, proxEv, '', f_x, optim );
   end
   
 % ------------ Check if starting x is optimal ------------
   
-  if opt <= optTol
-    flag    = FLAG_OPT;
-    message = MSG_OPT;
+  if optim <= optim_tol
+    flag    = FLAG_OPTIM;
+    message = MESSAGE_OPTIM;
     loop    = 0;
   end
 
@@ -143,12 +143,12 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
       funEv       = funEv + curvtrack_iters;
       proxEv      = proxEv + curvtrack_iters;
     [ ~, x_prox ] = nonsmoothF( x - Df_x ,1);
-      opt         = norm( x_prox - x ,'inf');
+      optim       = norm( x_prox - x ,'inf');
     
     Trace.f_x(iter+1)    = f_x;
     Trace.funEv(iter+1)  = funEv;
     Trace.proxEv(iter+1) = proxEv;
-    Trace.opt(iter+1)    = opt; 
+    Trace.optim(iter+1)  = optim; 
     
     if debug
       Trace.normDx(iter)          = norm( Df_x );
@@ -158,30 +158,30 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
     
     if display > 0 && mod( iter, display ) == 0
       fprintf( ' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n', ...
-        iter, funEv, proxEv, step, f_x, opt );
+        iter, funEv, proxEv, step, f_x, optim );
     end
     
   % ------------ Check stopping criteria ------------
     
-    if opt <= optTol
-      flag    = FLAG_OPT;
-      message = MSG_OPT;
+    if optim <= optim_tol
+      flag    = FLAG_OPTIM;
+      message = MESSAGE_OPTIM;
       loop    = 0;
     elseif norm( x - x_old, 'inf' ) / max( 1, norm( x_old, 'inf' ) ) <= xtol 
       flag    = FLAG_XTOL;
-      message = MSG_XTOL;
+      message = MESSAGE_XTOL;
       loop    = 0;
-    elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= funTol
-      flag    = FLAG_FUNTOL;
-      message = MSG_FUNTOL;
+    elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= ftol
+      flag    = FLAG_FTOL;
+      message = MESSAGE_FTOL;
       loop    = 0;
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
-      message = MSG_MAXITER;
+      message = MESSAGE_MAXITER;
       loop    = 0;
     elseif funEv >= maxfunEv
       flag    = FLAG_MAXFUNEV;
-      message = MSG_MAXFUNEV;
+      message = MESSAGE_MAXFUNEV;
       loop    = 0;
     end
   end
@@ -191,7 +191,7 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   Trace.f_x    = Trace.f_x(1:iter+1);
   Trace.funEv  = Trace.funEv(1:iter+1);
   Trace.proxEv = Trace.proxEv(1:iter+1);
-  Trace.opt    = Trace.opt(1:iter+1);
+  Trace.optim  = Trace.optim(1:iter+1);
   
   if debug
     Trace.normDx          = Trace.normDx(1:iter);
@@ -201,14 +201,14 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   
   if display > 0 && mod(iter,display) > 0
     fprintf( ' %4d | %6d  %6d  %12.4e  %12.4e  %12.4e\n', ...
-      iter, funEv, proxEv, step, f_x, opt );
+      iter, funEv, proxEv, step, f_x, optim );
   end
   
   output = struct( ...
     'flag'    , flag    ,...
     'funEv'   , funEv   ,...
     'iters'   , iter    ,...
-    'opt'     , opt     ,...
+    'optim'   , optim   ,...
     'options' , options ,...
     'proxEv'  , proxEv  ,...
     'Trace'   , Trace    ...

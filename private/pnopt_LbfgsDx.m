@@ -1,7 +1,7 @@
-function Dx = pnopt_Lbfgs_Dx( s_old, y_old, de, Df_x ) %#codegen
-% pnopt_LbfgsDx : L-BFGS search direction
+function Dx = pnopt_LbfgsDx( s_old, y_old, de, Df_x ) %#codegen
+% pnopt_LbfgsDx : Product with L-BFGS Hessian approximation inverse
 % 
-%   $Revision: 0.1.0 $  $Date: 2012/05/30 $
+%   $Revision: 0.1.1 $  $Date: 2012/06/30 $
 % 
   qty1 = 1 ./ sum( y_old.*s_old );
   l = length( qty1 );

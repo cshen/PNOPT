@@ -9,45 +9,45 @@ function options = pnopt_optimset( varargin )
 %   parameter names and their default values.
 %
 %   $ pnopt_optimset.m $
-%   $ Revision: 0.5.1 $  $Date: 2012/09/15 $
+%   $Revision: 0.6.4 $  $Date: 2012/09/30 $
 % 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNOPT:\n');
-    fprintf('    curv_param : [  positive scalar |    0.9 ] \n');    
-    fprintf('         debug : [          logical |      0 ] \n');
-    fprintf('    desc_param : [  positive scalar | 0.0001 ] \n');
-    fprintf('       display : [ positive integer |     10 ] \n');
-    fprintf('     Lbfgs_mem : [ positive integer |     50 ] \n');
-    fprintf(' backtrack_mem : [ positive integer |     10 ] \n');
-    fprintf('      maxfunEv : [ positive integer |   5000 ] \n');
-    fprintf('       maxIter : [ positive integer |    500 ] \n');
-    fprintf('        method : [           string |  Lbfgs ] \n');
-    fprintf('   quad_solver : [           string |  Tfocs ] \n');
-    fprintf('        funTol : [  positive scalar |   1e-9 ] \n');
-    fprintf('        optTol : [  positive scalar |   1e-6 ] \n');
-    fprintf('          xtol : [  positive scalar |   1e-9 ] \n');
+    fprintf('     curv_param : [  positive scalar |    0.9 ] \n');    
+    fprintf('          debug : [          logical |      0 ] \n');
+    fprintf('     desc_param : [  positive scalar | 0.0001 ] \n');
+    fprintf('        display : [ positive integer |     10 ] \n');
+    fprintf('      Lbfgs_mem : [ positive integer |     50 ] \n');
+    fprintf('  backtrack_mem : [ positive integer |     10 ] \n');
+    fprintf('       maxfunEv : [ positive integer |   5000 ] \n');
+    fprintf('        maxIter : [ positive integer |    500 ] \n');
+    fprintf('         method : [           string |  Lbfgs ] \n');
+    fprintf(' subprob_solver : [           string |  tfocs ] \n');
+    fprintf('           ftol : [  positive scalar |   1e-9 ] \n');
+    fprintf('      optim_Tol : [  positive scalar |   1e-6 ] \n');
+    fprintf('           xtol : [  positive scalar |   1e-9 ] \n');
     fprintf('\n');
     return;
   end
 
   Names = [
-    'curv_param    '
-    'debug         '
-    'desc_param    '
-    'display       '
-    'Lbfgs_mem     '
-    'backtrack_mem '
-    'maxfunEv      '
-    'maxIter       '
-    'method        '
-    'SparsaOpts    '
-    'quad_solver   '
-    'TfocsOpts     '
-    'funTol        '
-    'optTol        '
-    'xtol          '
-    'useMex        '
+    'curv_param     '
+    'debug          '
+    'desc_param     '
+    'display        '
+    'Lbfgs_mem      '
+    'backtrack_mem  '
+    'maxfunEv       '
+    'maxIter        '
+    'method         '
+    'sparsa_options '
+    'subprob_solver '
+    'TfocsOpts      '
+    'ftol           '
+    'optim_tol      '
+    'xtol           '
+    'useMex         '
     ];
   
   [m,n] = size(Names); %#ok<NASGU>

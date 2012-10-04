@@ -1,7 +1,7 @@
 function Hf_x = pnopt_Lbfgs_prod( s_old, y_old, de ) 
 % pnopt_Lbfgs_prod : Product with L-BFGS Hessian approximation
 % 
-%   $Revision: 0.1.2 $  $Date: 2012/06/15 $
+%   $Revision: 0.1.2 $  $Date: 2012/06/30 $
 % 
   l = size( s_old, 2 );
   L = zeros( l );
@@ -14,15 +14,12 @@ function Hf_x = pnopt_Lbfgs_prod( s_old, y_old, de )
 % %   Mark Schmidt's code (slow)
 %   Qty1 = et * ( sPrev' * sPrev );
 %   Qty2 = [ et  *sPrev, yPrev ];
-%   Qty3 = [ Qty1,  L;
-%            L'  , - diag(d1) ];
+%   Qty3 = [ Qty1, L; L', - diag(d1) ];
 %   Hx   = @(x) et  *x - Qty2 * ( Qty3 \ ( Qty2' *x ) );
 %   
   R    = chol( de * ( s_old' * s_old ) + L * ( diag( 1 ./ d1 ) * L' ), 'lower' );
-  R1   = [ diag( d2 )         zeros(l);
-          - L*diag( 1 ./ d2 ) R        ];
-  R2   = [- diag( d2 ) diag( 1 ./ d2 ) * L';
-          zeros( l )   R'                   ];
+  R1   = [ diag( d2 ), zeros(l); - L*diag( 1 ./ d2 ), R ];
+  R2   = [- diag( d2 ), diag( 1 ./ d2 ) * L'; zeros( l ), R' ];
   Qty2 = [ y_old, de * s_old ];
   Hf_x = @(x) de * x - Qty2 * ( R2 \ ( R1 \ ( Qty2' * x ) ) );
   

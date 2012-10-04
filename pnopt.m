@@ -15,17 +15,17 @@ function [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options )
 % ============ Process options ============
   
   default_options = pnopt_optimset( ...
-    'debug'       , 0       ,... % debug mode 
-    'desc_param'  , 0.0001  ,... % sufficient descent parameter
-    'display'     , 10      ,... % display frequency (<= 0 for no display) 
-    'Lbfgs_mem'   , 50      ,... % L-BFGS memory
-    'maxfunEv'    , 5000    ,... % max number of function evaluations
-    'maxIter'     , 500     ,... % max number of iterations
-    'method'      , 'Lbfgs' ,... % method for building Hessian approximation
-    'quad_solver' , 'Tfocs' ,... % quad_solver for solving subproblems
-    'funTol'      , 1e-9    ,... % stopping tolerance on relative change in the objective function 
-    'optTol'      , 1e-6    ,... % stopping tolerance on optimality condition
-    'xtol'        , 1e-9     ... % stopping tolerance on solution
+    'debug'          , 0       ,... % debug mode 
+    'desc_param'     , 0.0001  ,... % sufficient descent parameter
+    'display'        , 10      ,... % display frequency (<= 0 for no display) 
+    'Lbfgs_mem'      , 50      ,... % L-BFGS memory
+    'maxfunEv'       , 5000    ,... % max number of function evaluations
+    'maxIter'        , 500     ,... % max number of iterations
+    'method'         , 'Lbfgs' ,... % method for building Hessian approximation
+    'subprob_solver' , 'tfocs' ,... % solver for solving subproblems
+    'ftol'           , 1e-9    ,... % stopping tolerance on relative change in the objective function 
+    'optim_tol'      , 1e-6    ,... % stopping tolerance on optimality condition
+    'xtol'           , 1e-9     ... % stopping tolerance on solution
     );
   
   if nargin > 3

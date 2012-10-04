@@ -1,11 +1,11 @@
 function stop = tfocs_stop( x, nonsmoothF, optTol ) 
 % tfocs_stop : TFOCS stopping condition
 %
-%   $Revision: 0.1.0 $  $Date: 2012/07/10 $
+%   $Revision: 0.1.1 $  $Date: 2012/07/15 $
 % 
-  global quad_Df_x quad_opt
+  global subprob_Df_y subprob_optim
   
-  [ ~, x_prox ] = nonsmoothF( x - quad_Df_x ,1);
-    quad_opt    = norm( x_prox - x ,'inf');
-    stop        = quad_opt <= optTol;
+  [ ~, x_prox ]   = nonsmoothF( x - subprob_Df_y ,1);
+    subprob_optim = norm( x_prox - x ,'inf');
+    stop          = subprob_optim <= optTol;
   

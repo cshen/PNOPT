@@ -36,11 +36,11 @@
 <pre><code>addpath /home/yuekai/matlab/yuekai-PNOPT-xxxxxxx/
 </code></pre>
 
-<p>Users must also download and install <a href="http://tfocs.stanford.edu/">TFOCS</a>.</p>
+<p>We suggest users also install <a href="http://tfocs.stanford.edu/">TFOCS</a> (pronounced <em>tee-fox</em>), a MATLAB package for solving convex optimization problems in composite form.</p>
 
 <h2>Usage</h2>
 
-<p>PNOPT shares a similar interface with <a href="http://tfocs.stanford.edu/">TFOCS</a>, a popular MATLAB package for solving convex optimization problems in composite form:</p>
+<p>PNOPT shares a similar interface with <a href="http://tfocs.stanford.edu/">TFOCS</a> and <a href="http://www.di.ens.fr/~mschmidt/Software/minConf.html">minConf</a>:</p>
 
 <pre><code>[ x, f, output ] = pnopt( smoothF, nonsmoothF, x0, options );
 </code></pre>
@@ -54,7 +54,12 @@
 <code>nonsmoothF</code>: a nonsmooth function, </li>
 <li>
 <code>x0</code>: a starting point for the solver.</li>
-</ul><p>The user can also supply an <code>options</code> structure created using the <code>pnopt_optimset</code> function to customize the behavior of PNOPT. Calling <code>pnopt_optimset</code> with no inputs and outputs prints available options and their default values.</p>
+</ul><p>The user can also supply an <code>options</code> structure created using the <code>pnopt_optimset</code> function to customize the behavior of PNOPT. <code>pnopt_optimset</code> shares a similar interface with MATLAB's optimset function:</p>
+
+<pre><code>options = pnopt_optimset( 'param1', val1, 'param2', val2, ... );
+</code></pre>
+
+<p>Calling <code>pnopt_optimset</code> with no inputs and outputs prints available options.</p>
 
 <p>PNOPT returns:</p>
 
@@ -67,9 +72,7 @@
 <code>output</code>: a structure containing information collected during the execution of PNOPT.</li>
 </ul><h3>Creating the smooth and nonsmooth functions</h3>
 
-<p>PNOPT is compatible with the function generators included with TFOCS so the easiest method to create smooth and nonsmooth functions is to use these function generators. For details, please refer to section 3 of <a href="http://tfocs.stanford.edu/tfocs_userguide.pdf">the TFOCS user guide</a>.</p>
-
-<p>Smooth/nonsmooth functions must satisfy these conventions:</p>
+<p>Smooth and nonsmooth functions must satisty these conventions:</p>
 
 <ul>
 <li>
@@ -79,6 +82,8 @@
 <li>
 <code>nonsmoothF( x, t )</code> should return the proximal point <code>y</code> and the function value at <code>y</code>, <em>i.e.</em><code>[ fy, y ] = nonsmoothF( x, t )</code>.</li>
 </ul>
+
+<p>PNOPT is compatible with the function generators included with TFOCS so users can use these generators to create commonly used smooth and nonsmooth functions. Please refer to section 3 of <a href="http://tfocs.stanford.edu/tfocs_userguide.pdf">the TFOCS user guide</a> for details.</p>
 
 <h2>Demo</h2>
 

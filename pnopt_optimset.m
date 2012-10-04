@@ -91,13 +91,13 @@ function options = pnopt_optimset( varargin )
 
     if ~expectval
       if ~ischar(arg)
-         error(sprintf('Expected argument %d to be a string parameter name.', i));
+         error('Expected argument %d to be a string parameter name.', i);
       end
 
       lowArg = lower(arg);
       j = strmatch(lowArg,names);
       if isempty(j)                       % if no matches
-        error(sprintf('Unrecognized parameter name ''%s''.', arg));
+        error('Unrecognized parameter name ''%s''.', arg);
       elseif length(j) > 1                % if more than one match
         % Check for any exact matches (in case any names are subsets of others)
         k = strmatch(lowArg,names,'exact');
@@ -105,12 +105,11 @@ function options = pnopt_optimset( varargin )
           j = k;
         else
           msg = sprintf('Ambiguous parameter name ''%s'' ', arg);
-          msg = [msg '(' deblank(Names(j(1),:))];
+          msg = [msg '(' deblank(Names(j(1),:))]; %#ok<AGROW>
           for k = j(2:length(j))'
-            msg = [msg ', ' deblank(Names(k,:))];
+            msg = [msg ', ' deblank(Names(k,:))]; %#ok<AGROW>
           end
-          msg = sprintf('%s).', msg);
-          error(msg);
+          error('%s).', msg);
         end
       end
       expectval = 1;                      % we expect a value next
@@ -124,6 +123,6 @@ function options = pnopt_optimset( varargin )
   end
 
   if expectval
-    error(sprintf('Expected value for parameter ''%s''.', arg));
+    error('Expected value for parameter ''%s''.', arg);
   end
 

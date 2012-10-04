@@ -1,5 +1,5 @@
 function [ f_y, Df_y ] = pnopt_quad( P, q, r, x )
-% pnopt_quad : Generalized proximal term
+% pnopt_quad : Quadratic proximal term
 %
 %   $Revision: 0.1.2 $  $Date: 2012/06/24 $
 % 

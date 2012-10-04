@@ -11,6 +11,7 @@ function [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options )
 %   optimization parameters with those in options, a structure created using the
 %   pnopt_optimset function.
 % 
+%   $Revision: 0.6.4 $  $Date: 2012/09/30 $
   
 % ============ Process options ============
   

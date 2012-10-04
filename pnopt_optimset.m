@@ -8,7 +8,6 @@ function options = pnopt_optimset( varargin )
 % pnopt_optimset with no input arguments and no output arguments displays all 
 %   parameter names and their default values.
 %
-%   $ pnopt_optimset.m $
 %   $Revision: 0.6.4 $  $Date: 2012/09/30 $
 % 
   % Print out possible values of options.

@@ -33,7 +33,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   optim_tol      = options.optim_tol;
   xtol           = options.xtol;
   
-% ------------ Set subproblem subprob_solver options ------------
+% ------------ Set subproblem solver options ------------
   
   switch subprob_solver
     case 'sparsa'

@@ -37,7 +37,7 @@ function [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options )
   
   method = options.method;
     
-  % ============ Call quad_solver ============
+  % ============ Call solver ============
   
   switch method
     case 'bfgs'

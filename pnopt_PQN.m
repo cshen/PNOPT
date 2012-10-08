@@ -41,7 +41,7 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
       Lbfgs_mem = options.Lbfgs_mem;
   end
   
-% ------------ Set subproblem subprob_solver options ------------
+% ------------ Set subproblem solver options ------------
   
   switch subprob_solver
     case 'sparsa'

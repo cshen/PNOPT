@@ -13,19 +13,19 @@ function options = pnopt_optimset( varargin )
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
     fprintf('Default parameters for PNOPT:\n');
-    fprintf('     curv_param : [  positive scalar |    0.9 ] \n');    
-    fprintf('          debug : [          logical |      0 ] \n');
-    fprintf('     desc_param : [  positive scalar | 0.0001 ] \n');
-    fprintf('        display : [ positive integer |     10 ] \n');
-    fprintf('      Lbfgs_mem : [ positive integer |     50 ] \n');
-    fprintf('  backtrack_mem : [ positive integer |     10 ] \n');
-    fprintf('       maxfunEv : [ positive integer |   5000 ] \n');
-    fprintf('        maxIter : [ positive integer |    500 ] \n');
-    fprintf('         method : [           string |  Lbfgs ] \n');
-    fprintf(' subprob_solver : [           string |  tfocs ] \n');
-    fprintf('           ftol : [  positive scalar |   1e-9 ] \n');
-    fprintf('      optim_Tol : [  positive scalar |   1e-6 ] \n');
-    fprintf('           xtol : [  positive scalar |   1e-9 ] \n');
+    fprintf('     curv_param : [  positive scalar |     0.9 ] \n');    
+    fprintf('          debug : [          logical |       0 ] \n');
+    fprintf('     desc_param : [  positive scalar |  0.0001 ] \n');
+    fprintf('        display : [ positive integer |      10 ] \n');
+    fprintf('      Lbfgs_mem : [ positive integer |      50 ] \n');
+    fprintf('  backtrack_mem : [ positive integer |      10 ] \n');
+    fprintf('       maxfunEv : [ positive integer |    5000 ] \n');
+    fprintf('        maxIter : [ positive integer |     500 ] \n');
+    fprintf('         method : [           string |   Lbfgs ] \n');
+    fprintf(' subprob_solver : [           string |  sparsa ] \n');
+    fprintf('           ftol : [  positive scalar |    1e-9 ] \n');
+    fprintf('      optim_Tol : [  positive scalar |    1e-6 ] \n');
+    fprintf('           xtol : [  positive scalar |    1e-9 ] \n');
     fprintf('\n');
     return;
   end

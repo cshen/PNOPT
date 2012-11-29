@@ -47,24 +47,13 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
            
       if debug
         TfocsOpts.countOps = 1;
-        TfocsOpts.errFcn   = @(f, x) tfocs_err();
+        TfocsOpts.errFcn   = @ ( f, x ) tfocs_err();
       end
   end
   
 % ============ Initialize variables ============
   
-  FLAG_OPTIM   = 1;
-  FLAG_XTOL    = 2;
-  FLAG_FTOL    = 3;
-  FLAG_MAXITER = 4;
-  FLAG_MAXFEV  = 5;
-  FLAG_OTHER   = 6;
-  
-  MESSAGE_OPTIM   = 'Optimality below optim_tol.';
-  MESSAGE_XTOL    = 'Relative change in x below xtol.';
-  MESSAGE_FTOL    = 'Relative change in function value below funTol.';
-  MESSAGE_MAXITER = 'Max number of iterations reached.';
-  MESSAGE_MAXFEV  = 'Max number of function evaluations reached.';
+  pnopt_flags
   
   iter         = 0; 
   loop         = 1;
@@ -77,7 +66,6 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   
   if debug
     Trace.forcing_term    = zeros( maxIter, 1 );
-    Trace.normDx          = zeros( maxIter, 1 );
     Trace.backtrack_flag  = zeros( maxIter, 1 );
     Trace.backtrack_iters = zeros( maxIter, 1 );
     Trace.subprob_flags   = zeros( maxIter, 1 );
@@ -90,7 +78,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     fprintf( '                  PNOPT v.%s (%s)\n', REVISION, DATE );
     fprintf( ' %s\n', repmat( '=', 1, 64 ) );
     fprintf( ' %4s   %6s  %6s  %12s  %12s  %12s \n',...
-      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality' );
+      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optim.' );
     fprintf( ' %s\n', repmat( '-', 1, 64 ) );
   end
   
@@ -139,7 +127,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
       % SpaRSA
       case 'sparsa'
         sparsa_options = pnopt_optimset( sparsa_options ,...
-          'optim_tol', max( 0.5 * optim_tol, forcing_term * optim ) ...
+          'optim_tol', max( 0.1 * optim_tol, forcing_term * optim ) ...
           );  
 
         [ x_prox, ~, sparsa_out ] = ...
@@ -151,14 +139,14 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
         subprob_proxEv = sparsa_out.proxEv;
 
         if debug
-          subprob_flag  = sparsa_out.flag;
+          subprob_flag  = sparsa_out.flag; %#ok<NASGU>
           subprob_optim = sparsa_out.optim;
         end
 
       % TFOCS 
       case 'tfocs'
         TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
-          max( 0.5 * optim_tol, forcing_term * optim ) );
+          max( 0.1 * optim_tol, forcing_term * optim ) );
 
         [ x_prox, tfocsOut ] = ...
           tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
@@ -171,20 +159,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
         end
 
         if debug
-          switch tfocsOut.status
-            case 'Reached user''s supplied stopping criteria no. 1'
-              subprob_flag = FLAG_OPTIM;
-            case { 'Step size tolerance reached (||dx||=0)', ...
-                   'Step size tolerance reached'           , ...
-                   'Unexpectedly small stepsize' }
-              subprob_flag = FLAG_XTOL;
-            case 'Iteration limit reached'
-              subprob_flag = FLAG_MAXITER;
-            case 'Function/operator count limit reached'
-              subprob_flag = FLAG_MAXFEV;
-            otherwise
-              subprob_flag = FLAG_OTHER;
-          end
+          tfocs_flags
           subprob_optim = tfocsOut.err(end);
         end
     end
@@ -195,15 +170,16 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     
     x_old  = x;
     f_old  = f_x;
+    Df_old = Df_x;
     
     [ x, f_x, Df_x, D2f_x, step, backtrack_flag, backtrack_iters ] = ...
       pnopt_backtrack( x, Dx, 1, f_x, h_x, Df_x' * Dx, smoothF, nonsmoothF, ...
-        desc_param, xtol, maxfunEv - funEv ); 
+        desc_param, xtol, maxfunEv - funEv );  %#ok<ASGLU>
     
   % ------------ Select safeguarded forcing term ------------
     
     [ quadf, subprob_Df_x ] = quadF(x);  %#ok<ASGLU>
-      forcing_term       = min( 0.5, norm( Df_x - subprob_Df_x ) / norm( Df_x ) );
+      forcing_term       = min( 0.1, norm( Df_x - subprob_Df_x ) / norm( Df_old ) );
     
   % ------------ Collect data for display and output ------------
     
@@ -218,11 +194,8 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     Trace.optim(iter+1)  = optim;
     
     if debug
-      Trace.forc_term(iter)       = forcing_term;
-      Trace.normDx(iter)          = norm(Dx);
-      Trace.backtrack_flag(iter)  = backtrack_flag;
+      Trace.forcing_term(iter)    = forcing_term;
       Trace.backtrack_iters(iter) = backtrack_iters;
-      Trace.subprob_flags(iter)   = subprob_flag;
       Trace.subprob_iters(iter)   = subprob_iters;
       Trace.subprob_optim(iter)   = subprob_optim;
     end
@@ -243,18 +216,19 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
       message = MESSAGE_XTOL;
       loop    = 0;
     elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= ftol
-      flag    = FLAG_FTOL  ;
-      message = MESSAGE_FTOL  ;
+      flag    = FLAG_FTOL;
+      message = MESSAGE_FTOL;
       loop    = 0;
     elseif iter >= maxIter 
       flag    = FLAG_MAXITER;
       message = MESSAGE_MAXITER;
       loop    = 0;
     elseif funEv >= maxfunEv
-      flag    = FLAG_MAXFEV;
-      message = MESSAGE_MAXFEV;
+      flag    = FLAG_MAXFUNEV;
+      message = MESSAGE_MAXFUNEV;
       loop    = 0;
     end
+    
   end
   
 % ============ Cleanup and exit ============
@@ -266,10 +240,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   
   if debug
     Trace.forcing_term    = Trace.forc_term(1:iter);
-    Trace.normDx          = Trace.normDx(1:iter);
-    Trace.backtrack_flag  = Trace.backtrack_flag(1:iter);
     Trace.backtrack_iters = Trace.backtrack_iters(1:iter);
-    Trace.subprob_flags   = Trace.subprob_flags(1:iter);
     Trace.subprob_iters   = Trace.subprob_iters(1:iter);
     Trace.subprob_optim   = Trace.subprob_optim(1:iter);
   end

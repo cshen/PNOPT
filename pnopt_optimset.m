@@ -24,7 +24,7 @@ function options = pnopt_optimset( varargin )
     fprintf('         method : [           string |   Lbfgs ] \n');
     fprintf(' subprob_solver : [           string |  sparsa ] \n');
     fprintf('           ftol : [  positive scalar |    1e-9 ] \n');
-    fprintf('      optim_Tol : [  positive scalar |    1e-6 ] \n');
+    fprintf('      optim_tol : [  positive scalar |    1e-6 ] \n');
     fprintf('           xtol : [  positive scalar |    1e-9 ] \n');
     fprintf('\n');
     return;

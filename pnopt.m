@@ -40,9 +40,7 @@ function [ x, f, output ] = pnopt( smoothF, nonsmoothF, x, options )
   % ============ Call solver ============
   
   switch method
-    case 'bfgs'
-      [ x, f, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options );
-    case 'Lbfgs'
+    case {'bfgs', 'Lbfgs'}
       [ x, f, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options );
     case 'newton'
       [ x, f, output ] = pnopt_PN( smoothF, nonsmoothF, x, options );

@@ -40,17 +40,7 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   
 % ============ Initialize variables ============
   
-  FLAG_OPTIM    = 1;
-  FLAG_XTOL     = 2;
-  FLAG_FTOL     = 3;
-  FLAG_MAXITER  = 4;
-  FLAG_MAXFUNEV = 5;
-  
-  MESSAGE_OPTIM    = 'Optimality below optim_tol.';
-  MESSAGE_XTOL     = 'Relative change in x below xtol.';
-  MESSAGE_FTOL   = 'Relative change in function value below ftol.';
-  MESSAGE_MAXITER  = 'Max number of iterations reached.';
-  MESSAGE_MAXFUNEV = 'Max number of function evaluations reached.';
+  pnopt_flags
   
   iter = 0; 
   loop = 1;
@@ -71,7 +61,7 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
     fprintf( '                   SPG v.%s (%s)\n', REVISION, DATE );
     fprintf( ' %s\n', repmat( '=', 1, 64 ) );
     fprintf( ' %4s   %6s  %6s  %12s  %12s  %12s \n',...
-      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optimality' );
+      '','Fun.', 'Prox', 'Step len.', 'Obj. val.', 'Optim.' );
     fprintf( ' %s\n', repmat( '=', 1, 64 ) );
   end
   
@@ -151,7 +141,6 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
     Trace.optim(iter+1)  = optim; 
     
     if debug
-      Trace.normDx(iter)          = norm( Df_x );
       Trace.backtrack_flag(iter)  = curvtrack_flag;
       Trace.backtrack_iters(iter) = curvtrack_iters;
     end
@@ -184,6 +173,7 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
       message = MESSAGE_MAXFUNEV;
       loop    = 0;
     end
+  
   end
   
 % ============ Cleanup and exit ============
@@ -194,7 +184,6 @@ function [ x, f_x, output ] = pnopt_sparsa( smoothF, nonsmoothF, x, options )
   Trace.optim  = Trace.optim(1:iter+1);
   
   if debug
-    Trace.normDx          = Trace.normDx(1:iter);
     Trace.backtrack_flag  = Trace.backtrack_flag(1:iter);
     Trace.backtrack_iters = Trace.backtrack_iters(1:iter);
   end

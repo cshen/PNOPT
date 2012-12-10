@@ -1,7 +1,7 @@
 function s = merge_struct( s1 ,s2 )
 % merge_struct : Merge two structures
 % 
-%   $Revision: 0.1.0 $  $Date: 2012/07/01 $
+%   $Revision: 0.1.0 $  $Date: 2012/6/15 $
 % 
   s = s1;
   

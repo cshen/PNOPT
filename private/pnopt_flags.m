@@ -1,3 +1,7 @@
+% pnopt_flags : PNOPT flags and output messages.
+% 
+%   $Revision: 0.8.0 $  $Date: 2012/12/01 $
+% 
   FLAG_OPTIM   = 1;
   FLAG_XTOL    = 2;
   FLAG_FTOL    = 3;

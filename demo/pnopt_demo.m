@@ -6,9 +6,9 @@
   
   load flow.mat
   
-  loglikelihood = @(T) smooth_logdet();
+  C = 
   
-%% Solve the Graphical Lasso using PNOPT
+  log_likelihood = @(T) smooth_logdet( 0.5, inv(X) );
   
   lambda    = 15*ones(n+1,1);
   lambda(1) = 0;      % Do not penalize bias term
@@ -16,8 +16,8 @@
   
   w0 = zeros(p,1);
   
-%% 
+%% Solve the Graphical Lasso using PNOPT
   
-  PNoptions = PNoptimset('debug', 1);
-  [wPN, fPN, PNoutput] = ProxQuasiNewton(loglikelihood, L1pen, w0, PNoptions);
+  options = PNoptimset('debug', 1);
+  [w, f, output] = pnopt(log_likelihood, L1pen, w0, options);
   

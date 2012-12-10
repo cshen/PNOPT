@@ -8,7 +8,7 @@ function options = pnopt_optimset( varargin )
 % pnopt_optimset with no input arguments and no output arguments displays all 
 %   parameter names and their default values.
 %
-%   $Revision: 0.6.4 $  $Date: 2012/09/30 $
+%   $Revision: 0.8.0 $  $Date: 2012/12/01 $
 % 
   % Print out possible values of options.
   if nargin == 0 && nargout == 0
@@ -22,7 +22,7 @@ function options = pnopt_optimset( varargin )
     fprintf('       maxfunEv : [ positive integer |    5000 ] \n');
     fprintf('        maxIter : [ positive integer |     500 ] \n');
     fprintf('         method : [           string |   Lbfgs ] \n');
-    fprintf(' subprob_solver : [           string |  sparsa ] \n');
+    fprintf(' subProb_solver : [           string |  sparsa ] \n');
     fprintf('           ftol : [  positive scalar |    1e-9 ] \n');
     fprintf('      optim_tol : [  positive scalar |    1e-6 ] \n');
     fprintf('           xtol : [  positive scalar |    1e-9 ] \n');
@@ -41,7 +41,7 @@ function options = pnopt_optimset( varargin )
     'maxIter        '
     'method         '
     'sparsa_options '
-    'subprob_solver '
+    'subProb_solver '
     'TfocsOpts      '
     'ftol           '
     'optim_tol      '

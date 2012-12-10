@@ -1,9 +1,9 @@
-function varargout = pnopt_backtrack( x, d, t, f_x, h_x, df_x, smoothF, ...
+function varargout = pnopt_backtrack( x, d, t, f_x, h_x, dg_x, smoothF, ...
   nonsmoothF, desc_param, xtol, maxIter )
 % pnopt_backtrack : Backtracking line search for step that satisfies a sufficient 
 %   descent condition.
 % 
-%   $Revision: 0.1.1 $  $Date: 2012/06/30 $
+%   $Revision: 0.8.0 $  $Date: 2012/12/01 $
 % 
 % --------------------Initialize--------------------
 
@@ -17,7 +17,7 @@ function varargout = pnopt_backtrack( x, d, t, f_x, h_x, df_x, smoothF, ...
 
   iter = 0;
   
-  desc = df_x + nonsmoothF( x + d ) - h_x;
+  desc = dg_x + nonsmoothF( x + d ) - h_x;
   
   % --------------------Main Loop--------------------
   while 1
@@ -26,12 +26,12 @@ function varargout = pnopt_backtrack( x, d, t, f_x, h_x, df_x, smoothF, ...
     % Evaluate trial point and function value.
     y = x + d * t;
     if nargout > 6
-      [ f_y, Df_y, D2f_y ] = smoothF( y );
+      [ g_y, Dg_y, D2g_y ] = smoothF( y );
     else
-      [ f_y, Df_y ] = smoothF( y );
+      [ g_y, Dg_y ] = smoothF( y );
     end
     h_y = nonsmoothF( y );
-    f_y = f_y + h_y;
+    f_y = g_y + h_y;
     
     % Check termination criteria
     if f_y < f_x + desc_param * t * desc         % Sufficient descent condition satisfied
@@ -46,11 +46,11 @@ function varargout = pnopt_backtrack( x, d, t, f_x, h_x, df_x, smoothF, ...
     end
 
     % Backtrack if objective value not well-defined
-    if isnan( f_y ) || isinf( f_y ) || abs( f_y - f_x - t * df_x ) <= 1e-9
+    if isnan( f_y ) || isinf( f_y ) || abs( f_y - f_x - t * dg_x ) <= 1e-9
       t = beta * t;
     % Safeguard quadratic interpolation
     else
-      t_interp = - ( df_x * t^2) / ( 2 * ( f_y - f_x - t * df_x ) );
+      t_interp = - ( dg_x * t^2) / ( 2 * ( f_y - f_x - t * dg_x ) );
       if 0.01 <= t_interp && t_interp <= 0.99*t 
         t = t_interp;
       else
@@ -61,9 +61,9 @@ function varargout = pnopt_backtrack( x, d, t, f_x, h_x, df_x, smoothF, ...
   end 
   
   if nargout > 6
-    varargout = { y, f_y, Df_y, D2f_y, t, flag ,iter };
+    varargout = { y, f_y, Dg_y, D2g_y, t, flag ,iter };
   else
-    varargout = { y, f_y, Df_y, t, flag ,iter };
+    varargout = { y, f_y, Dg_y, t, flag ,iter };
   end
   
   

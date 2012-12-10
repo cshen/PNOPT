@@ -1,7 +1,7 @@
 function Hf_x = pnopt_Lbfgs_prod( s_old, y_old, de ) 
 % pnopt_Lbfgs_prod : Product with L-BFGS Hessian approximation
 % 
-%   $Revision: 0.1.2 $  $Date: 2012/06/30 $
+%   $Revision: 0.8.0 $  $Date: 2012/12/01 $
 % 
   l = size( s_old, 2 );
   L = zeros( l );

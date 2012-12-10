@@ -1,10 +1,10 @@
 function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
 % pnopt_PN : Proximal Newton method
 % 
-%   $Revision: 0.6.4 $  $Date: 2012/09/30 $
+%   $Revision: 0.8.0 $  $Date: 2012/12/01 $
 % 
-  REVISION = '$Revision: 0.5.1$';
-  DATE     = '$Date: Sep. 15, 2012$';
+  REVISION = '$Revision: 0.8.0$';
+  DATE     = '$Date: Dec. 01, 2012$';
   REVISION = REVISION(11:end-1);
   DATE     = DATE(8:end-1);
   
@@ -28,14 +28,14 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   display        = options.display;
   maxfunEv       = options.maxfunEv;
   maxIter        = options.maxIter;
-  subprob_solver = options.subprob_solver;
+  subProb_solver = options.subProb_solver;
   ftol           = options.ftol;
   optim_tol      = options.optim_tol;
   xtol           = options.xtol;
   
 % ------------ Set subproblem solver options ------------
   
-  switch subprob_solver
+  switch subProb_solver
     case 'sparsa'
       if isfield( options, 'sparsaOpts' ) && ~isempty( options.sparsaOpts )
         sparsa_options = pnopt_optimset( sparsa_options, options.sparsaOpts );
@@ -66,11 +66,8 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   
   if debug
     Trace.forcing_term    = zeros( maxIter, 1 );
-    Trace.backtrack_flag  = zeros( maxIter, 1 );
-    Trace.backtrack_iters = zeros( maxIter, 1 );
-    Trace.subprob_flags   = zeros( maxIter, 1 );
-    Trace.subprob_iters   = zeros( maxIter, 1 );
-    Trace.subprob_optim   = zeros( maxIter, 1 );
+    Trace.subProb_iters   = zeros( maxIter, 1 );
+    Trace.subProb_optim   = zeros( maxIter, 1 );
   end
   
   if display > 0  
@@ -84,15 +81,15 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   
 % ------------ Evaluate objective function at starting x ------------
   
-  [ f_x, Df_x, D2f_x ] = smoothF( x );
+  [ g_x, Dg_x, D2g_x ] = smoothF( x );
     h_x                = nonsmoothF( x );
-    f_x                = f_x + h_x;
+    f_x                = g_x + h_x;
   
 % ------------ Start collecting data for display and output ------------
   
     funEv       = 1;
     proxEv      = 0;
-  [ ~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+  [ ~, x_prox ] = nonsmoothF( x - Dg_x, 1 );
     optim       = norm( x_prox - x, 'inf' );
   
   Trace.f_x(1)    = f_x;
@@ -120,9 +117,9 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     
   % ------------ Solve subproblem for a search direction ------------
     
-    quadF = @(z) pnopt_quad( D2f_x, Df_x, f_x, z - x );
+    quadF = @(z) smooth_quad( D2g_x, Dg_x, f_x, z - x );
 
-    switch subprob_solver
+    switch subProb_solver
 
       % SpaRSA
       case 'sparsa'
@@ -135,12 +132,12 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
 
       % ------------ Collect data from subproblem solve ------------
 
-        subprob_iters  = sparsa_out.iters;
-        subprob_proxEv = sparsa_out.proxEv;
+        subProb_iters  = sparsa_out.iters;
+        subProb_proxEv = sparsa_out.proxEv;
 
         if debug
-          subprob_flag  = sparsa_out.flag; %#ok<NASGU>
-          subprob_optim = sparsa_out.optim;
+          subProb_flag  = sparsa_out.flag; %#ok<NASGU>
+          subProb_optim = sparsa_out.optim;
         end
 
       % TFOCS 
@@ -151,16 +148,16 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
         [ x_prox, tfocsOut ] = ...
           tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
 
-        subprob_iters = tfocsOut.niter;
+        subProb_iters = tfocsOut.niter;
         if isfield( TfocsOpts, 'countOps' ) && TfocsOpts.countOps
-          subprob_proxEv = tfocsOut.counts(end,5);
+          subProb_proxEv = tfocsOut.counts(end,5);
         else
-          subprob_proxEv = tfocsOut.niter;
+          subProb_proxEv = tfocsOut.niter;
         end
 
         if debug
           tfocs_flags
-          subprob_optim = tfocsOut.err(end);
+          subProb_optim = tfocsOut.err(end);
         end
     end
       
@@ -170,22 +167,22 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     
     x_old  = x;
     f_old  = f_x;
-    Df_old = Df_x;
+    Dg_old = Dg_x;
     
-    [ x, f_x, Df_x, D2f_x, step, backtrack_flag, backtrack_iters ] = ...
-      pnopt_backtrack( x, Dx, 1, f_x, h_x, Df_x' * Dx, smoothF, nonsmoothF, ...
+    [ x, f_x, Dg_x, D2g_x, step, backtrack_flag, backtrack_iters ] = ...
+      pnopt_backtrack( x, Dx, 1, f_x, h_x, Dg_x' * Dx, smoothF, nonsmoothF, ...
         desc_param, xtol, maxfunEv - funEv );  %#ok<ASGLU>
     
   % ------------ Select safeguarded forcing term ------------
     
-    [ quadf, subprob_Df_x ] = quadF(x);  %#ok<ASGLU>
-      forcing_term       = min( 0.1, norm( Df_x - subprob_Df_x ) / norm( Df_old ) );
+    [ quadf, subProb_Dg_x ] = quadF(x);  %#ok<ASGLU>
+      forcing_term       = min( 0.1, norm( Dg_x - subProb_Dg_x ) / norm( Dg_old ) );
     
   % ------------ Collect data for display and output ------------
     
       funEv       =  funEv + backtrack_iters ;
-      proxEv      = proxEv + backtrack_iters + subprob_proxEv;
-    [ ~, x_prox ] = nonsmoothF( x - Df_x, 1 );
+      proxEv      = proxEv + backtrack_iters + subProb_proxEv;
+    [ ~, x_prox ] = nonsmoothF( x - Dg_x, 1 );
       optim         = norm( x_prox - x, 'inf' );
     
     Trace.f_x(iter+1)    = f_x;
@@ -196,8 +193,8 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     if debug
       Trace.forcing_term(iter)    = forcing_term;
       Trace.backtrack_iters(iter) = backtrack_iters;
-      Trace.subprob_iters(iter)   = subprob_iters;
-      Trace.subprob_optim(iter)   = subprob_optim;
+      Trace.subProb_iters(iter)   = subProb_iters;
+      Trace.subProb_optim(iter)   = subProb_optim;
     end
     
     if display > 0 && mod( iter, display ) == 0
@@ -241,8 +238,8 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   if debug
     Trace.forcing_term    = Trace.forc_term(1:iter);
     Trace.backtrack_iters = Trace.backtrack_iters(1:iter);
-    Trace.subprob_iters   = Trace.subprob_iters(1:iter);
-    Trace.subprob_optim   = Trace.subprob_optim(1:iter);
+    Trace.subProb_iters   = Trace.subProb_iters(1:iter);
+    Trace.subProb_optim   = Trace.subProb_optim(1:iter);
   end
   
   if display > 0 && mod( iter, display ) > 0
@@ -266,5 +263,5 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     fprintf( ' %s\n', repmat( '-', 1, 64 ) );
   end
   
-  clear global Dq_y subprob_optim
+  clear global subProb_Dg_y subProb_optim
   

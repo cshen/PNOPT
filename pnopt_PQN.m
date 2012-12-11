@@ -169,7 +169,7 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
   % ------------ Solve subproblem for a search direction ------------
     
     if iter > 1 
-      quadF = @(z) smooth_quad( Hf_x, Dg_x, f_x, z - x );
+      quadF = @(z) pnopt_quad( Hf_x, Dg_x, f_x, z - x );
       
       switch subProb_solver
         

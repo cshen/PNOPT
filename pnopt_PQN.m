@@ -208,7 +208,6 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
           end
           
           if debug
-            tfocs_flags
             subProb_optim = tfocsOut.err(end);
           end
       end
@@ -219,7 +218,6 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
       subProb_proxEv = 0;
       
       if debug 
-        subProb_flag  = 0; %#ok<NASGU>
         subProb_optim = 0;
       end
       
@@ -246,7 +244,7 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
     
     if iter > 1 
       [ q_x, subProb_Dg_x ] = quadF(x);  %#ok<ASGLU>
-        forcing_term     = min( 0.1 , norm( Dg_x - subProb_Dg_x ) / norm( Dg_old ) );
+        forcing_term        = min( 0.1 , norm( Dg_x - subProb_Dg_x ) / norm( Dg_old ) );
     end
     
   % ------------ Collect data for display and output ------------
@@ -273,33 +271,11 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
         iter, funEv, proxEv, step, f_x, optim );
     end
     
-  % ------------ Check stopping criteria ------------
-    
-   if optim <= optim_tol
-      flag    = FLAG_OPTIM;
-      message = MESSAGE_OPTIM;
-      loop    = 0;
-    elseif norm( x - x_old, 'inf' ) / max( 1, norm( x_old, 'inf' ) ) <= xtol 
-      flag    = FLAG_XTOL;
-      message = MESSAGE_XTOL;
-      loop    = 0;
-    elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= ftol
-      flag    = FLAG_FTOL;
-      message = MESSAGE_FTOL;
-      loop    = 0;
-    elseif iter >= maxIter 
-      flag    = FLAG_MAXITER;
-      message = MESSAGE_MAXITER;
-      loop    = 0;
-    elseif funEv >= maxfunEv
-      flag    = FLAG_MAXFUNEV;
-      message = MESSAGE_MAXFUNEV;
-      loop    = 0;
-    end
+    pnopt_stop
     
   end
   
-% ============ Cleanup and exit ============
+% ============ Clean up and exit ============
   
   Trace.f_x    = Trace.f_x(1:iter+1);
   Trace.funEv  = Trace.funEv(1:iter+1);
@@ -318,7 +294,7 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
       iter, funEv, proxEv, step, f_x, optim );
   end
   
-  output = struct( ...
+  output = struct( ...    
     'flag'    , flag    ,...
     'funEv'   , funEv   ,...
     'iters'   , iter    ,...
@@ -334,5 +310,5 @@ function [ x, f_x, output ] = pnopt_PQN( smoothF, nonsmoothF, x, options )
     fprintf( ' %s\n', repmat( '-', 1, 64 ) );
   end
   
-  clear global Dq_y subProb_optim
-  
+  clear global subProb_Dg_y subProb_optim
+    

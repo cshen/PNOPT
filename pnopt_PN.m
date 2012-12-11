@@ -16,7 +16,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
     'maxIter'  , 500   ...
     );
   
-  TfocsOpts = struct(...
+  tfocsOpts = struct(...
     'alg'        , 'N83' ,...
     'maxIts'     , 500   ,...
     'printEvery' , 0     ,...
@@ -41,13 +41,13 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
         sparsa_options = pnopt_optimset( sparsa_options, options.sparsaOpts );
       end
     case 'tfocs'
-      if isfield( options, 'TfocsOpts' ) && ~isempty( options.TfocsOpts )
-        TfocsOpts = merge_struct( TfocsOpts, options.TfocsOpts );
+      if isfield( options, 'tfocsOpts' ) && ~isempty( options.tfocsOpts )
+        tfocsOpts = merge_struct( tfocsOpts, options.tfocsOpts );
       end
            
       if debug
-        TfocsOpts.countOps = 1;
-        TfocsOpts.errFcn   = @ ( f, x ) tfocs_err();
+        tfocsOpts.countOps = 1;
+        tfocsOpts.errFcn   = @ ( f, x ) tfocs_err();
       end
   end
   
@@ -142,21 +142,20 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
 
       % TFOCS 
       case 'tfocs'
-        TfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
+        tfocsOpts.stopFcn = @(f, x) tfocs_stop( x, nonsmoothF,...
           max( 0.1 * optim_tol, forcing_term * optim ) );
 
         [ x_prox, tfocsOut ] = ...
-          tfocs( quadF, [], nonsmoothF, x, TfocsOpts );
+          tfocs( quadF, [], nonsmoothF, x, tfocsOpts );
 
         subProb_iters = tfocsOut.niter;
-        if isfield( TfocsOpts, 'countOps' ) && TfocsOpts.countOps
+        if isfield( tfocsOpts, 'countOps' ) && tfocsOpts.countOps
           subProb_proxEv = tfocsOut.counts(end,5);
         else
           subProb_proxEv = tfocsOut.niter;
         end
 
         if debug
-          tfocs_flags
           subProb_optim = tfocsOut.err(end);
         end
     end
@@ -176,7 +175,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   % ------------ Select safeguarded forcing term ------------
     
     [ quadf, subProb_Dg_x ] = quadF(x);  %#ok<ASGLU>
-      forcing_term       = min( 0.1, norm( Dg_x - subProb_Dg_x ) / norm( Dg_old ) );
+      forcing_term          = min( 0.1, norm( Dg_x - subProb_Dg_x ) / norm( Dg_old ) );
     
   % ------------ Collect data for display and output ------------
     
@@ -202,33 +201,11 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
         iter, funEv, proxEv, step, f_x, optim );
     end
     
-  % ------------ Check stopping criteria ------------
-    
-    if optim <= optim_tol
-      flag    = FLAG_OPTIM;
-      message = MESSAGE_OPTIM;
-      loop    = 0;
-    elseif norm( x - x_old, 'inf' ) / max( 1, norm( x_old, 'inf' ) ) <= xtol 
-      flag    = FLAG_XTOL;
-      message = MESSAGE_XTOL;
-      loop    = 0;
-    elseif abs( f_old - f_x ) / max( 1, abs( f_old ) ) <= ftol
-      flag    = FLAG_FTOL;
-      message = MESSAGE_FTOL;
-      loop    = 0;
-    elseif iter >= maxIter 
-      flag    = FLAG_MAXITER;
-      message = MESSAGE_MAXITER;
-      loop    = 0;
-    elseif funEv >= maxfunEv
-      flag    = FLAG_MAXFUNEV;
-      message = MESSAGE_MAXFUNEV;
-      loop    = 0;
-    end
+    pnopt_stop
     
   end
   
-% ============ Cleanup and exit ============
+% ============ Clean up and exit ============
   
   Trace.f_x    = Trace.f_x(1:iter+1);
   Trace.funEv  = Trace.funEv(1:iter+1);
@@ -236,7 +213,7 @@ function [ x, f_x, output ] = pnopt_PN( smoothF, nonsmoothF, x, options )
   Trace.optim  = Trace.optim(1:iter+1);
   
   if debug
-    Trace.forcing_term    = Trace.forc_term(1:iter);
+    Trace.forcing_term    = Trace.forcing_term(1:iter);
     Trace.backtrack_iters = Trace.backtrack_iters(1:iter);
     Trace.subProb_iters   = Trace.subProb_iters(1:iter);
     Trace.subProb_optim   = Trace.subProb_optim(1:iter);

@@ -1,4 +1,4 @@
-% pnopt_flags : PNOPT flags and output messages.
+% pnopt_flags 
 % 
 %   $Revision: 0.8.0 $  $Date: 2012/12/01 $
 % 
